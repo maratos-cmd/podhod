@@ -1,0 +1,570 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0363DE380E01741635262C23 /* Podhod/Core/Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA329F46C49F5A287E174D38 /* Podhod/Core/Persistence.swift */; };
+		06930B4348C89939097C5DC9 /* Podhod/Views/ActiveWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6E7EF885D1BA64165CD37C /* Podhod/Views/ActiveWorkoutView.swift */; };
+		111AE1D3489C8D7BFD448235 /* Podhod/Core/SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F15AF6067293510CE2933EA2 /* Podhod/Core/SeedData.swift */; };
+		2A0E8259B17B809F50203955 /* Podhod/PodhodApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B6835231CB734A5FE1941F /* Podhod/PodhodApp.swift */; };
+		2B04BE7DD1B7942B0FFC4A45 /* Podhod/Views/BackupSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D010A7DA12D903F2D66824F6 /* Podhod/Views/BackupSettingsView.swift */; };
+		2C93C94BA7EDF504E0BD8156 /* Podhod/Views/TrainingEditorComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCFF626AB3C95E0D18F6176 /* Podhod/Views/TrainingEditorComponents.swift */; };
+		2E448E7F251C3C8765C112CE /* Podhod/Views/MeasurementsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA41F499797315D895C64A4E /* Podhod/Views/MeasurementsViews.swift */; };
+		399D2A6F90388321E9DE3EBB /* Podhod/Services/RestNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDAB33631843111D13F02994 /* Podhod/Services/RestNotificationService.swift */; };
+		3EF7D1B5B83578D428606259 /* Podhod/Views/HistoryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35701D37D4C70C094DA2EF49 /* Podhod/Views/HistoryViews.swift */; };
+		40FEBC37BAB8A6268C8C2CEB /* Podhod/Core/Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF894171E41D1F5187E101D /* Podhod/Core/Models.swift */; };
+		609828C997B4BF801EAA3366 /* Podhod/Core/TrainingMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C538341843482A66CBB0DAD /* Podhod/Core/TrainingMath.swift */; };
+		63E55B70E2BB7289D15FFC78 /* Podhod/Views/Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 859FC8129EFF00910C50FC15 /* Podhod/Views/Theme.swift */; };
+		7CB7D68921B7FDCC6B3FBD33 /* Podhod/Views/ExerciseLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76DE9350604A283F65974E1 /* Podhod/Views/ExerciseLibraryView.swift */; };
+		8421CB7611C319FFC134D867 /* PodhodUITests/WorkoutFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B4A7868156623C7AE502EC4 /* PodhodUITests/WorkoutFlowTests.swift */; };
+		9E5388C271E7E0110AD024A0 /* PodhodTests/CoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C5458EDDA5FF0537159B9A /* PodhodTests/CoreTests.swift */; };
+		B153E2EACFD13FE859DA258C /* Podhod/Views/AnalyticsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF41060114982038B1CA6EE8 /* Podhod/Views/AnalyticsViews.swift */; };
+		C761192496510B07F48F5658 /* Podhod/Views/ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DDA0F88A52F2375A20F0D0D /* Podhod/Views/ProfileViews.swift */; };
+		E08EC32FF0BE45D7B3DDCC5D /* Podhod/Views/TrainingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A2AA3603C3576F70575667 /* Podhod/Views/TrainingViews.swift */; };
+		EC3BFCEB7D8379D51EAE10EA /* Podhod/Core/TrainingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F28086E709C7A2DB65CAAD /* Podhod/Core/TrainingStore.swift */; };
+		F3DFC4C06D3D06DFAAD13881 /* Podhod/Services/HealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F902A4FAEDEAFA0579CCFCBA /* Podhod/Services/HealthService.swift */; };
+		FB90684E69A6C96ED866993E /* Podhod/Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5174955314CC661E58E2B8FD /* Podhod/Resources/Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		56BEC90BFAA6E50B1835ED22 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9EFE7DEE7442B36C22F84F1;
+			remoteInfo = Podhod;
+		};
+		940BD0050A88A8467AC517C6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9EFE7DEE7442B36C22F84F1;
+			remoteInfo = Podhod;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		03C5458EDDA5FF0537159B9A /* PodhodTests/CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/CoreTests.swift; sourceTree = "<group>"; };
+		05B6835231CB734A5FE1941F /* Podhod/PodhodApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/PodhodApp.swift; sourceTree = "<group>"; };
+		0604FDB637B2B7C46E138375 /* Podhod/Resources/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Podhod/Resources/Info.plist; sourceTree = "<group>"; };
+		0AF894171E41D1F5187E101D /* Podhod/Core/Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/Models.swift; sourceTree = "<group>"; };
+		0B4A7868156623C7AE502EC4 /* PodhodUITests/WorkoutFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodUITests/WorkoutFlowTests.swift; sourceTree = "<group>"; };
+		22A2AA3603C3576F70575667 /* Podhod/Views/TrainingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/TrainingViews.swift; sourceTree = "<group>"; };
+		2B6E7EF885D1BA64165CD37C /* Podhod/Views/ActiveWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/ActiveWorkoutView.swift; sourceTree = "<group>"; };
+		35701D37D4C70C094DA2EF49 /* Podhod/Views/HistoryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/HistoryViews.swift; sourceTree = "<group>"; };
+		3D4FB19C1B777E35023F3F0B /* PodhodTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = PodhodTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3DDA0F88A52F2375A20F0D0D /* Podhod/Views/ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/ProfileViews.swift; sourceTree = "<group>"; };
+		5174955314CC661E58E2B8FD /* Podhod/Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Podhod/Resources/Assets.xcassets; sourceTree = "<group>"; };
+		530B0CDBC73C452D9849A36B /* PodhodUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = PodhodUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		64F28086E709C7A2DB65CAAD /* Podhod/Core/TrainingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/TrainingStore.swift; sourceTree = "<group>"; };
+		6FC7A2CB19E6C1A58AC4B5C6 /* Podhod.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = Podhod.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7C538341843482A66CBB0DAD /* Podhod/Core/TrainingMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/TrainingMath.swift; sourceTree = "<group>"; };
+		859FC8129EFF00910C50FC15 /* Podhod/Views/Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/Theme.swift; sourceTree = "<group>"; };
+		A34DF02EAD6D61F5D63CCFE0 /* Podhod/Resources/Podhod.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Podhod/Resources/Podhod.entitlements; sourceTree = "<group>"; };
+		AA329F46C49F5A287E174D38 /* Podhod/Core/Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/Persistence.swift; sourceTree = "<group>"; };
+		AF41060114982038B1CA6EE8 /* Podhod/Views/AnalyticsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/AnalyticsViews.swift; sourceTree = "<group>"; };
+		BA41F499797315D895C64A4E /* Podhod/Views/MeasurementsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/MeasurementsViews.swift; sourceTree = "<group>"; };
+		CDAB33631843111D13F02994 /* Podhod/Services/RestNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/RestNotificationService.swift; sourceTree = "<group>"; };
+		D010A7DA12D903F2D66824F6 /* Podhod/Views/BackupSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/BackupSettingsView.swift; sourceTree = "<group>"; };
+		D76DE9350604A283F65974E1 /* Podhod/Views/ExerciseLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/ExerciseLibraryView.swift; sourceTree = "<group>"; };
+		DDCFF626AB3C95E0D18F6176 /* Podhod/Views/TrainingEditorComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/TrainingEditorComponents.swift; sourceTree = "<group>"; };
+		F15AF6067293510CE2933EA2 /* Podhod/Core/SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/SeedData.swift; sourceTree = "<group>"; };
+		F902A4FAEDEAFA0579CCFCBA /* Podhod/Services/HealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/HealthService.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		53E9490448DF8FA010C28282 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		602D90922CB1B1E4134FB61F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C6BD91946CA39E269EC109E9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00C45FD35CB0F9C5F764F070 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6FC7A2CB19E6C1A58AC4B5C6 /* Podhod.app */,
+				3D4FB19C1B777E35023F3F0B /* PodhodTests.xctest */,
+				530B0CDBC73C452D9849A36B /* PodhodUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		ADCF10F76EBF2A74473E9DC4 = {
+			isa = PBXGroup;
+			children = (
+				CF8D0BD4B75E8C2C174692A5 /* Подход */,
+				EEFE21A1443933CA4DE017DA /* Tests */,
+				00C45FD35CB0F9C5F764F070 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CF8D0BD4B75E8C2C174692A5 /* Подход */ = {
+			isa = PBXGroup;
+			children = (
+				0AF894171E41D1F5187E101D /* Podhod/Core/Models.swift */,
+				AA329F46C49F5A287E174D38 /* Podhod/Core/Persistence.swift */,
+				F15AF6067293510CE2933EA2 /* Podhod/Core/SeedData.swift */,
+				7C538341843482A66CBB0DAD /* Podhod/Core/TrainingMath.swift */,
+				64F28086E709C7A2DB65CAAD /* Podhod/Core/TrainingStore.swift */,
+				05B6835231CB734A5FE1941F /* Podhod/PodhodApp.swift */,
+				F902A4FAEDEAFA0579CCFCBA /* Podhod/Services/HealthService.swift */,
+				CDAB33631843111D13F02994 /* Podhod/Services/RestNotificationService.swift */,
+				2B6E7EF885D1BA64165CD37C /* Podhod/Views/ActiveWorkoutView.swift */,
+				AF41060114982038B1CA6EE8 /* Podhod/Views/AnalyticsViews.swift */,
+				D010A7DA12D903F2D66824F6 /* Podhod/Views/BackupSettingsView.swift */,
+				D76DE9350604A283F65974E1 /* Podhod/Views/ExerciseLibraryView.swift */,
+				35701D37D4C70C094DA2EF49 /* Podhod/Views/HistoryViews.swift */,
+				BA41F499797315D895C64A4E /* Podhod/Views/MeasurementsViews.swift */,
+				3DDA0F88A52F2375A20F0D0D /* Podhod/Views/ProfileViews.swift */,
+				859FC8129EFF00910C50FC15 /* Podhod/Views/Theme.swift */,
+				DDCFF626AB3C95E0D18F6176 /* Podhod/Views/TrainingEditorComponents.swift */,
+				22A2AA3603C3576F70575667 /* Podhod/Views/TrainingViews.swift */,
+				0604FDB637B2B7C46E138375 /* Podhod/Resources/Info.plist */,
+				A34DF02EAD6D61F5D63CCFE0 /* Podhod/Resources/Podhod.entitlements */,
+				5174955314CC661E58E2B8FD /* Podhod/Resources/Assets.xcassets */,
+			);
+			name = "Подход";
+			sourceTree = "<group>";
+		};
+		EEFE21A1443933CA4DE017DA /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				03C5458EDDA5FF0537159B9A /* PodhodTests/CoreTests.swift */,
+				0B4A7868156623C7AE502EC4 /* PodhodUITests/WorkoutFlowTests.swift */,
+			);
+			name = Tests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B27571EBA91D340CB47BBAEC /* PodhodTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D790F979FF98407462016069 /* Build configuration list for PBXNativeTarget "PodhodTests" */;
+			buildPhases = (
+				5AB7BFA0548999A025E928B3 /* Sources */,
+				53E9490448DF8FA010C28282 /* Frameworks */,
+				404CD36939669D1F92331302 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0846C5719BAFA0CE29F15B53 /* PBXTargetDependency */,
+			);
+			name = PodhodTests;
+			productName = PodhodTests;
+			productReference = 3D4FB19C1B777E35023F3F0B /* PodhodTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C9EFE7DEE7442B36C22F84F1 /* Podhod */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A73745A52C3BBC9220D2E57 /* Build configuration list for PBXNativeTarget "Podhod" */;
+			buildPhases = (
+				76C5EF7A1B3342EA698F9FFB /* Sources */,
+				602D90922CB1B1E4134FB61F /* Frameworks */,
+				2AFF87222E45CE7E6453459B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Podhod;
+			productName = Podhod;
+			productReference = 6FC7A2CB19E6C1A58AC4B5C6 /* Podhod.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D8307469A69DAEB7C74D8AD3 /* PodhodUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1AD8CDA018CF08317A142EE8 /* Build configuration list for PBXNativeTarget "PodhodUITests" */;
+			buildPhases = (
+				6257B9AF69324370C3051CFD /* Sources */,
+				C6BD91946CA39E269EC109E9 /* Frameworks */,
+				53B1E6653A05CA3F38B0323F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FA15EB4C49BB68B8A4F53CDE /* PBXTargetDependency */,
+			);
+			name = PodhodUITests;
+			productName = PodhodUITests;
+			productReference = 530B0CDBC73C452D9849A36B /* PodhodUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					C9EFE7DEE7442B36C22F84F1 = {
+						CreatedOnToolsVersion = 26.6;
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = 12D04D787E90C9B967248BFD /* Build configuration list for PBXProject "Podhod" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = ru;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				ru,
+				en,
+				Base,
+			);
+			mainGroup = ADCF10F76EBF2A74473E9DC4;
+			productRefGroup = 00C45FD35CB0F9C5F764F070 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C9EFE7DEE7442B36C22F84F1 /* Podhod */,
+				B27571EBA91D340CB47BBAEC /* PodhodTests */,
+				D8307469A69DAEB7C74D8AD3 /* PodhodUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2AFF87222E45CE7E6453459B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB90684E69A6C96ED866993E /* Podhod/Resources/Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		404CD36939669D1F92331302 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53B1E6653A05CA3F38B0323F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5AB7BFA0548999A025E928B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9E5388C271E7E0110AD024A0 /* PodhodTests/CoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6257B9AF69324370C3051CFD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8421CB7611C319FFC134D867 /* PodhodUITests/WorkoutFlowTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		76C5EF7A1B3342EA698F9FFB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				40FEBC37BAB8A6268C8C2CEB /* Podhod/Core/Models.swift in Sources */,
+				0363DE380E01741635262C23 /* Podhod/Core/Persistence.swift in Sources */,
+				111AE1D3489C8D7BFD448235 /* Podhod/Core/SeedData.swift in Sources */,
+				609828C997B4BF801EAA3366 /* Podhod/Core/TrainingMath.swift in Sources */,
+				EC3BFCEB7D8379D51EAE10EA /* Podhod/Core/TrainingStore.swift in Sources */,
+				2A0E8259B17B809F50203955 /* Podhod/PodhodApp.swift in Sources */,
+				F3DFC4C06D3D06DFAAD13881 /* Podhod/Services/HealthService.swift in Sources */,
+				399D2A6F90388321E9DE3EBB /* Podhod/Services/RestNotificationService.swift in Sources */,
+				06930B4348C89939097C5DC9 /* Podhod/Views/ActiveWorkoutView.swift in Sources */,
+				B153E2EACFD13FE859DA258C /* Podhod/Views/AnalyticsViews.swift in Sources */,
+				2B04BE7DD1B7942B0FFC4A45 /* Podhod/Views/BackupSettingsView.swift in Sources */,
+				7CB7D68921B7FDCC6B3FBD33 /* Podhod/Views/ExerciseLibraryView.swift in Sources */,
+				3EF7D1B5B83578D428606259 /* Podhod/Views/HistoryViews.swift in Sources */,
+				2E448E7F251C3C8765C112CE /* Podhod/Views/MeasurementsViews.swift in Sources */,
+				C761192496510B07F48F5658 /* Podhod/Views/ProfileViews.swift in Sources */,
+				63E55B70E2BB7289D15FFC78 /* Podhod/Views/Theme.swift in Sources */,
+				2C93C94BA7EDF504E0BD8156 /* Podhod/Views/TrainingEditorComponents.swift in Sources */,
+				E08EC32FF0BE45D7B3DDCC5D /* Podhod/Views/TrainingViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0846C5719BAFA0CE29F15B53 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9EFE7DEE7442B36C22F84F1 /* Podhod */;
+			targetProxy = 56BEC90BFAA6E50B1835ED22 /* PBXContainerItemProxy */;
+		};
+		FA15EB4C49BB68B8A4F53CDE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9EFE7DEE7442B36C22F84F1 /* Podhod */;
+			targetProxy = 940BD0050A88A8467AC517C6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1C6332C759B35B5B3487F3CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		55395EA90F03CD80AD659223 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhodtests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Podhod.app/Podhod";
+			};
+			name = Release;
+		};
+		5807A58051682C98251B0766 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhodtests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Podhod.app/Podhod";
+			};
+			name = Debug;
+		};
+		8B7212A5EF49F64ACD4F072A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_TESTABILITY = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A59B45B59AD28A095AD60AB3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhoduitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Podhod;
+			};
+			name = Debug;
+		};
+		B33558EAAF31D403A3AA4131 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Podhod/Resources/Podhod.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = SC67SPD9PH;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Podhod/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhod;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		CC69117804F29CD6574344AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Podhod/Resources/Podhod.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = SC67SPD9PH;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Podhod/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhod;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		DA8A463E628F80F3F7FFE110 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhoduitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Podhod;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		12D04D787E90C9B967248BFD /* Build configuration list for PBXProject "Podhod" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1C6332C759B35B5B3487F3CD /* Debug */,
+				8B7212A5EF49F64ACD4F072A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1AD8CDA018CF08317A142EE8 /* Build configuration list for PBXNativeTarget "PodhodUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A59B45B59AD28A095AD60AB3 /* Debug */,
+				DA8A463E628F80F3F7FFE110 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A73745A52C3BBC9220D2E57 /* Build configuration list for PBXNativeTarget "Podhod" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC69117804F29CD6574344AE /* Debug */,
+				B33558EAAF31D403A3AA4131 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D790F979FF98407462016069 /* Build configuration list for PBXNativeTarget "PodhodTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5807A58051682C98251B0766 /* Debug */,
+				55395EA90F03CD80AD659223 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}

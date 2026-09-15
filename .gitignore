@@ -1,0 +1,17 @@
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+TestResults/
+DeviceBackups/
+*.p12
+*.p8
+*.mobileprovision
+*.provisionprofile
+*.ipa
+*.xcarchive/
+.env
+.env.*
+!.env.example
+privatekeys/
