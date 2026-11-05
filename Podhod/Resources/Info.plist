@@ -11,6 +11,12 @@
     <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSRequiresIPhoneOS</key><true/>
+    <key>NSSupportsLiveActivities</key><true/>
+    <key>NSAlarmKitUsageDescription</key><string>Подход отменяет будильники, оставшиеся от предыдущей версии. Новые сигналы отдыха приходят обычными уведомлениями.</string>
+    <key>CFBundleURLTypes</key><array><dict>
+        <key>CFBundleURLName</key><string>app.personal.podhod.workout</string>
+        <key>CFBundleURLSchemes</key><array><string>podhod</string></array>
+    </dict></array>
     <key>UILaunchScreen</key><dict><key>UIColorName</key><string>LaunchBackground</string></dict>
     <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><false/></dict>
     <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>

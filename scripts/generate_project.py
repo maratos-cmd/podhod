@@ -6,6 +6,8 @@ import json
 
 ROOT = Path(__file__).resolve().parent.parent
 PROJECT = ROOT / 'Podhod.xcodeproj'
+if (ROOT / 'PodhodActivity').exists():
+    raise SystemExit('Этот архивный генератор не поддерживает расширение Live Activity. Используйте сохранённый Podhod.xcodeproj; новые файлы добавляйте в нужные targets через Xcode. Существующий проект и подпись не изменены.')
 PROJECT.mkdir(exist_ok=True)
 
 def uid(value):

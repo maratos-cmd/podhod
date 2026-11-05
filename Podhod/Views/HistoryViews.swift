@@ -3,14 +3,16 @@ import SwiftUI
 struct HistoryView: View {
     @EnvironmentObject private var store: TrainingStore
 
+    @State private var deletingWorkout: Workout?
+
     private var workouts: [Workout] {
         store.workouts.sorted { $0.startedAt > $1.startedAt }
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+            List {
+                Group {
                     if workouts.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Image(systemName: "clock.arrow.circlepath")
@@ -37,12 +39,28 @@ struct HistoryView: View {
                                 WorkoutSummaryCard(workout: workout, records: store.personalRecords(in: workout))
                             }
                             .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button("Удалить", systemImage: "trash", role: .destructive) { deletingWorkout = workout }
+                                    .buttonStyle(.automatic)
+                            }
                         }
                     }
                 }
-                .padding(20)
-                .padding(.bottom, 30)
+                .listRowInsets(EdgeInsets(top: 10, leading: 20, bottom: 10, trailing: 20))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .alert("Удалить тренировку?", isPresented: Binding(
+                get: { deletingWorkout != nil }, set: { if !$0 { deletingWorkout = nil } }
+            ), presenting: deletingWorkout) { workout in
+                Button("Удалить тренировку", role: .destructive) {
+                    store.deleteWorkout(workout.id)
+                    deletingWorkout = nil
+                }
+                Button("Отмена", role: .cancel) { deletingWorkout = nil }
+            } message: { _ in Text("Тренировка и все её подходы будут удалены из истории и статистики.") }
             .background(AppTheme.background)
             .navigationTitle("История")
             .toolbar {
@@ -143,6 +161,10 @@ struct WorkoutDetailView: View {
     @State private var editingWorkout: Workout?
     @State private var showDelete = false
     @State private var didImportHealth = false
+    @State private var historyExercise: ExerciseDefinition?
+    @State private var showSaveRoutine = false
+    @State private var showExistingWorkout = false
+    @Environment(\.openActiveWorkout) private var openActiveWorkout
 
     private var workout: Workout? { store.workouts.first { $0.id == workoutID } }
 
@@ -186,11 +208,25 @@ struct WorkoutDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button("Повторить тренировку", systemImage: "arrow.counterclockwise") {
+                        if store.activeWorkout != nil { showExistingWorkout = true }
+                        else if let workout, store.repeatWorkout(workout) { openActiveWorkout() }
+                    }
+                    Button("Сохранить как программу", systemImage: "list.clipboard") { showSaveRoutine = true }
                     Button("Изменить", systemImage: "pencil") { editingWorkout = workout }
                     Button("Удалить тренировку", systemImage: "trash", role: .destructive) { showDelete = true }
                 } label: { Image(systemName: "ellipsis.circle") }
+                    .accessibilityLabel("Действия с тренировкой")
             }
         }
+        .sheet(item: $historyExercise) { ExerciseHistoryView(exercise: $0) }
+        .sheet(isPresented: $showSaveRoutine) {
+            if let workout { SaveWorkoutAsRoutineView(workout: workout) }
+        }
+        .alert("Тренировка уже идёт", isPresented: $showExistingWorkout) {
+            Button("Продолжить текущую") { openActiveWorkout() }
+            Button("Отмена", role: .cancel) { }
+        } message: { Text("Сначала заверши или отмени текущую тренировку. Её записи сохранены.") }
         .sheet(item: $editingWorkout) { workout in
             EditPastWorkoutView(workout: workout)
         }
@@ -247,7 +283,7 @@ struct WorkoutDetailView: View {
                     .foregroundStyle(AppTheme.accent)
                     .frame(width: 28, height: 28)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(exercise.definition.name).font(.headline)
+                    Button(exercise.definition.name) { historyExercise = exercise.definition }.font(.headline)
                     Text(exercise.definition.primaryMuscle.title)
                         .font(.caption).foregroundStyle(AppTheme.secondary)
                 }
@@ -259,6 +295,7 @@ struct WorkoutDetailView: View {
                         .font(.caption).foregroundStyle(.orange)
                 }
             }
+            if let flag = exercise.discomfort { DiscomfortLabel(record: flag) }
             if !exercise.notes.isEmpty {
                 Text(exercise.notes).font(.subheadline).foregroundStyle(AppTheme.secondary)
             }
@@ -286,6 +323,8 @@ private struct EditPastWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
     @State var workout: Workout
     @State private var validationError: String?
+    @State private var deletingSet: UUID?
+    @State private var discomfortExercise: WorkoutExercise?
 
     var body: some View {
         NavigationStack {
@@ -302,8 +341,12 @@ private struct EditPastWorkoutView: View {
                 ForEach(workout.exercises.indices, id: \.self) { exerciseIndex in
                     Section(workout.exercises[exerciseIndex].definition.name) {
                         TextField("Заметки к упражнению", text: $workout.exercises[exerciseIndex].notes, axis: .vertical)
-                        ForEach(workout.exercises[exerciseIndex].sets.indices, id: \.self) { setIndex in
+                        Button("Дискомфорт") { discomfortExercise = workout.exercises[exerciseIndex] }
+                        ForEach(Array(workout.exercises[exerciseIndex].sets.enumerated()), id: \.element.id) { setIndex, set in
                             historicalSetEditor(exerciseIndex: exerciseIndex, setIndex: setIndex)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button("Удалить", systemImage: "trash", role: .destructive) { deletingSet = set.id }
+                                }
                         }
                     }
                 }
@@ -324,6 +367,23 @@ private struct EditPastWorkoutView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Готово") { save() }.fontWeight(.semibold) }
             }
             .trainingKeyboardDismissButton()
+            .sheet(item: $discomfortExercise) { exercise in
+                DiscomfortEditorView(record: exercise.discomfort) { flag in
+                    if let index = workout.exercises.firstIndex(where: { $0.id == exercise.id }) { workout.exercises[index].discomfort = flag }
+                }
+            }
+            .alert("Удалить подход из истории?", isPresented: Binding(
+                get: { deletingSet != nil }, set: { if !$0 { deletingSet = nil } }
+            ), presenting: deletingSet) { setID in
+                Button("Удалить подход", role: .destructive) {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    for index in workout.exercises.indices {
+                        workout.exercises[index].sets.removeAll { $0.id == setID }
+                    }
+                    deletingSet = nil
+                }
+                Button("Отмена", role: .cancel) { deletingSet = nil }
+            } message: { _ in Text("Подход будет удалён после нажатия «Готово». Можно отменить редактирование тренировки целиком.") }
         }
     }
 
@@ -333,6 +393,7 @@ private struct EditPastWorkoutView: View {
             HStack {
                 Text("Подход \(setIndex + 1)").font(.subheadline.weight(.semibold))
                 Spacer()
+                if workout.exercises[exerciseIndex].sets[setIndex].sides == nil {
                 if loadType.usesWeight {
                     TrainingNumberField(label: "Вес, кг", value: workout.exercises[exerciseIndex].sets[setIndex].weight) {
                         workout.exercises[exerciseIndex].sets[setIndex].weight = $0
@@ -341,6 +402,10 @@ private struct EditPastWorkoutView: View {
                 TrainingNumberField(label: "Повторы", value: Double(workout.exercises[exerciseIndex].sets[setIndex].reps), integer: true) {
                     workout.exercises[exerciseIndex].sets[setIndex].reps = Int($0)
                 }
+            }
+                }
+            if let sides = workout.exercises[exerciseIndex].sets[setIndex].sides {
+                SideResultsEditor(sides: sides, loadType: loadType) { workout.exercises[exerciseIndex].sets[setIndex].sides = $0 }
             }
             if let steps = workout.exercises[exerciseIndex].sets[setIndex].dropSteps, !steps.isEmpty {
                 ForEach(Array(steps.enumerated()), id: \.element.id) { stepIndex, step in
@@ -375,15 +440,11 @@ private struct EditPastWorkoutView: View {
             validationError = "Окончание должно быть после начала тренировки."
             return
         }
-        for exercise in workout.exercises {
-            for set in exercise.sets {
-                guard set.reps > 0, set.reps <= 999, set.weight.isFinite, set.weight >= 0, set.weight <= 2000,
-                      exercise.definition.loadType != .external || set.weight > 0 else {
-                    validationError = "Проверь подходы: от 1 до 999 повторов, вес до 2000 кг. Для внешнего веса укажи значение больше нуля."
-                    return
-                }
-            }
-        }
+        do {
+            var candidate = store.data
+            if let index = candidate.workouts.firstIndex(where: { $0.id == workout.id }) { candidate.workouts[index] = workout }
+            try Persistence.validate(candidate)
+        } catch { validationError = error.localizedDescription; return }
         if let original = store.workouts.first(where: { $0.id == workout.id }), original.startedAt != workout.startedAt || original.endedAt != workout.endedAt {
             workout.averageHeartRate = nil
             workout.healthWorkoutID = nil

@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import ActivityKit
 
 struct BackupSettingsView: View {
     @EnvironmentObject private var store: TrainingStore
@@ -8,6 +9,7 @@ struct BackupSettingsView: View {
     @State private var pendingImport: URL?
     @State private var showImportConfirmation = false
     @State private var feedback: String?
+    @ObservedObject private var activityService = WorkoutActivityService.shared
 
     var body: some View {
         Form {
@@ -33,17 +35,37 @@ struct BackupSettingsView: View {
                 Text("JSON-файл содержит программы, упражнения, историю, измерения и текущую тренировку. Сохрани его в «Файлы» или iCloud Drive. Автоматической облачной синхронизации нет. Перед удалением приложения сохрани копию.")
             }
             Section {
+                Label("Доступно сохранение через «Файлы»", systemImage: "icloud")
+                Text("Нажми «Сохранить резервную копию», затем «Сохранить в Файлы» и выбери iCloud Drive. Для восстановления выбери этот JSON-файл через «Восстановить из файла».")
+                    .font(.footnote).foregroundStyle(AppTheme.secondary)
+            } header: { Text("Резервная копия в iCloud") } footer: {
+                Text("Автоматическое копирование в iCloud недоступно с текущей бесплатной подписью приложения. Ручная копия содержит весь дневник и настройки. Локальные данные доступны без интернета.")
+            }
+            Section {
                 LabeledContent("Тренировок", value: "\(store.workouts.count)")
                 LabeledContent("Программ", value: "\(store.routines.count)")
                 LabeledContent("Упражнений", value: "\(store.exercises.count)")
                 LabeledContent("Измерений", value: "\(store.measurements.count)")
             } header: { Text("На устройстве") }
             Section {
-                Link(destination: URL(string: UIApplication.openSettingsURLString)!) {
-                    Label("Настройки уведомлений", systemImage: "bell.badge")
+                NavigationLink { InactivityReminderSettingsView() } label: {
+                    Label("Напоминания о тренировках", systemImage: "bell")
                 }
-            } header: { Text("Отдых между подходами") } footer: {
-                Text("Окончание отдыха отмечается локальным уведомлением. Разреши уведомления и звуки в настройках iPhone. Фокусирование и беззвучный режим могут влиять на сигнал.")
+            }
+            Section {
+                NavigationLink { RestAlertSettingsView() } label: {
+                    Label("Уведомления", systemImage: "bell.badge")
+                }.accessibilityIdentifier("notificationSettings")
+            } footer: {
+                Text("Короткий сигнал окончания отдыха, выбор звука и проверка уведомления при блокировке.")
+            }
+            Section {
+                Label("Тренировка на экране блокировки", systemImage: "iphone.gen3.radiowaves.left.and.right")
+                Text("Карточка появляется при начале тренировки, если активности разрешены в настройках iPhone. В ней видны упражнение, подходы и отдых. Нажми карточку, чтобы вернуться к тренировке.")
+                    .font(.footnote).foregroundStyle(AppTheme.secondary)
+                if let error = activityService.lastError { Text(error).font(.footnote).foregroundStyle(.orange) }
+            } header: { Text("Экран блокировки") } footer: {
+                Text("На моделях с Dynamic Island доступна компактная карточка. Система управляет её обновлением в фоне; активность ограничена 8 часами.")
             }
             Section {
                 Label("Импорт пульса после тренировки", systemImage: "heart.fill")
@@ -77,6 +99,7 @@ struct BackupSettingsView: View {
             Button("Понятно", role: .cancel) { feedback = nil }
         } message: { Text(feedback ?? "") }
     }
+
 
     private func prepareImport(_ source: URL) {
         let hasAccess = source.startAccessingSecurityScopedResource()

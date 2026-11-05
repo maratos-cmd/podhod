@@ -1,10 +1,19 @@
 import Foundation
 import Combine
+import UIKit
 
 @MainActor
 final class TrainingStore: ObservableObject {
     @Published private(set) var data: AppData
     @Published var errorMessage: String?
+    @Published private(set) var isDataAvailable = true
+    @Published private(set) var isSavePending = false
+    private let storage: JournalStorage
+    private let protectedDataAvailable: () -> Bool
+    private var journalWasPresent = false
+    private var storageError: String?
+    // Presentation preferences live for the current workout, including minimizing its screen.
+    @Published var expandedCompletedExercises: Set<UUID> = []
     private let fileURL: URL
     private let notificationsEnabled: Bool
 
@@ -14,53 +23,103 @@ final class TrainingStore: ObservableObject {
     var activeWorkout: Workout? { data.activeWorkout }
     var measurements: [BodyMeasurement] { data.measurements.sorted { $0.date > $1.date } }
     var restTimer: RestTimer? { data.restTimer }
-
-    init(fileURL: URL? = nil, notificationsEnabled: Bool = true, initialData: AppData? = nil) {
-        self.fileURL = fileURL ?? URL.applicationSupportDirectory.appending(path: "Podhod/workouts.json")
-        self.notificationsEnabled = notificationsEnabled
-        self.data = initialData ?? SeedData.initial()
-        guard initialData == nil, FileManager.default.fileExists(atPath: self.fileURL.path) else { return }
-        do {
-            data = try Persistence.decode(Data(contentsOf: self.fileURL))
-        } catch {
-            let recovery = self.fileURL.appendingPathExtension("previous")
-            if let recovered = try? Persistence.decode(Data(contentsOf: recovery)) {
-                data = recovered
-                errorMessage = "Основной файл повреждён. Восстановлена предыдущая сохранённая версия."
-            } else {
-                errorMessage = "Не удалось прочитать данные. Исходный файл сохранён отдельно; можно восстановить резервную копию в настройках."
-            }
-            let preserved = self.fileURL.deletingLastPathComponent().appending(path: "unreadable-\(Int(Date().timeIntervalSince1970)).json")
-            try? FileManager.default.copyItem(at: self.fileURL, to: preserved)
-        }
+    var nextAction: WorkoutNextAction? {
+        activeWorkout.map { WorkoutFlow.nextAction(in: $0, after: restTimer?.sourceSetID) }
     }
 
+    init(fileURL: URL? = nil, notificationsEnabled: Bool = true, initialData: AppData? = nil,
+         storage: JournalStorage = .live, protectedDataAvailable: (() -> Bool)? = nil) {
+        self.fileURL = fileURL ?? URL.applicationSupportDirectory.appending(path: "Podhod/workouts.json")
+        self.notificationsEnabled = notificationsEnabled
+        self.storage = storage
+        self.protectedDataAvailable = protectedDataAvailable ?? { UIApplication.shared.isProtectedDataAvailable }
+        self.data = initialData ?? SeedData.initial()
+        if initialData == nil { loadJournal() }
+    }
+
+    private func loadJournal() {
+        guard protectedDataAvailable() else { isDataAvailable = false; return }
+        guard storage.exists(fileURL) else {
+            isDataAvailable = !journalWasPresent
+            if journalWasPresent { reportStorageError("Не удалось открыть дневник. Повтори попытку после разблокировки iPhone.") }
+            return
+        }
+        journalWasPresent = true
+        let bytes: Data
+        do { bytes = try storage.read(fileURL) }
+        catch {
+            // An unavailable protected file is not corrupt. Never restore an older copy or
+            // allow the seed journal to overwrite it merely because reading was denied.
+            isDataAvailable = false
+            if protectedDataAvailable() { reportStorageError("Не удалось открыть дневник. Разблокируй iPhone и нажми «Повторить».") }
+            return
+        }
+        do {
+            data = try Persistence.decode(bytes)
+            isDataAvailable = true
+            clearStorageError()
+        } catch {
+            let recovery = fileURL.appendingPathExtension("previous")
+            do {
+                data = try Persistence.decode(storage.read(recovery))
+                isDataAvailable = true
+                reportStorageError("Основной файл повреждён. Восстановлена предыдущая сохранённая версия.")
+            } catch {
+                isDataAvailable = false
+                reportStorageError("Не удалось прочитать дневник. Файлы сохранены; можно восстановить резервную копию в настройках.")
+            }
+            let preserved = fileURL.deletingLastPathComponent().appending(path: "unreadable-\(Int(Date().timeIntervalSince1970)).json")
+            try? FileManager.default.copyItem(at: fileURL, to: preserved)
+        }
+        if isDataAvailable { try? storage.prepare(fileURL) }
+    }
+
+    private func reportStorageError(_ message: String) { storageError = message; errorMessage = message }
+    private func clearStorageError() {
+        if errorMessage == storageError { errorMessage = nil }
+        storageError = nil
+    }
+    private func writeJournal(_ candidate: AppData) throws {
+        guard isDataAvailable else { throw CocoaError(.fileReadNoPermission) }
+        try storage.write(candidate, fileURL)
+    }
     private func persist() {
-        do { try Persistence.write(data, to: fileURL) }
-        catch { errorMessage = "Не удалось сохранить изменения на телефоне: \(error.localizedDescription)" }
+        guard isDataAvailable else { return }
+        isSavePending = true
+        do {
+            try writeJournal(data)
+            isSavePending = false
+            clearStorageError()
+        } catch {
+            if protectedDataAvailable() || !Persistence.isAccessError(error) {
+                reportStorageError("Не удалось сохранить изменения на телефоне: \(error.localizedDescription)")
+            }
+        }
+        synchronizeWorkoutActivity()
+    }
+
+    func resumePersistence() {
+        if !isDataAvailable { loadJournal() }
+        guard isDataAvailable else { return }
+        if isSavePending { persist() }
+        else if protectedDataAvailable() { try? storage.prepare(fileURL) }
     }
 
     func startWorkout(routine: Routine? = nil) {
+        guard isDataAvailable else { return }
         guard data.activeWorkout == nil else { return }
-        var exercises = routine?.exercises ?? []
-        var groupIDs: [UUID: UUID] = [:]
-        for index in exercises.indices {
-            exercises[index].id = UUID()
-            exercises[index].sets = exercises[index].sets.map { $0.freshTarget() }
-            if let originalGroup = exercises[index].supersetID {
-                let group = groupIDs[originalGroup] ?? UUID()
-                groupIDs[originalGroup] = group
-                exercises[index].supersetID = group
-            }
-        }
-        SupersetEditing.normalize(&exercises)
-        data.activeWorkout = Workout(name: routine?.name ?? "Свободная тренировка", exercises: exercises)
+        let exercises = WorkoutFlow.freshExercises(routine?.exercises ?? [])
+        data.activeWorkout = Workout(name: routine?.name ?? "Свободная тренировка", exercises: exercises,
+                                     defaultRestSeconds: routine?.defaultRestSeconds ?? 120,
+                                     originRoutineID: routine?.id)
+        expandedCompletedExercises = []
         data.restTimer = nil
         persist()
-        if notificationsEnabled { Task { _ = await RestNotificationService.shared.requestAuthorization() } }
+        synchronizeRestNotification()
     }
 
     func updateActive(_ change: (inout Workout) -> Void) {
+        guard isDataAvailable else { return }
         guard var workout = data.activeWorkout else { return }
         change(&workout)
         SupersetEditing.normalize(&workout.exercises)
@@ -74,30 +133,35 @@ final class TrainingStore: ObservableObject {
             errorMessage = "Проверь вес и повторы. Для выполненного подхода значения должны оставаться корректными."
             return
         }
-        let cancelledRest = data.restTimer != nil && candidate.restTimer == nil
+        let notificationChanged = data.restTimer != candidate.restTimer || nextAction !=
+            candidate.activeWorkout.map { WorkoutFlow.nextAction(in: $0, after: candidate.restTimer?.sourceSetID) }
         data = candidate
-        if cancelledRest {
-            if notificationsEnabled { RestNotificationService.shared.cancel() }
-        }
+        if notificationChanged { synchronizeRestNotification() }
         persist()
     }
 
     func addExerciseToActive(_ definition: ExerciseDefinition) {
+        guard isDataAvailable else { return }
         guard let workout = data.activeWorkout else { return }
-        var exercise = WorkoutExercise(definition: definition, restSeconds: workout.defaultRestSeconds)
-        if let previous = previousExercise(for: definition.id, before: workout.startedAt) {
-            exercise.sets = previous.exercise.sets.map { $0.freshTarget() }
+        var exercise = WorkoutExercise.new(definition, restSeconds: workout.defaultRestSeconds)
+        if let previous = previousExercise(for: definition.id, before: workout.startedAt),
+           previous.exercise.definition.loadType == definition.loadType,
+           previous.exercise.definition.isUnilateral == definition.isUnilateral {
+            exercise.sets = previous.exercise.sets.map { $0.target(for: definition) }
             exercise.restSeconds = previous.exercise.restSeconds
         }
         updateActive { $0.exercises.append(exercise) }
     }
 
     func replaceExerciseInActive(exerciseID: UUID, with definition: ExerciseDefinition) {
+        guard isDataAvailable else { return }
         guard let workout = data.activeWorkout,
               let current = workout.exercises.first(where: { $0.id == exerciseID }) else { return }
         var replacement = current.replacingDefinition(with: definition)
-        if let previous = previousExercise(for: definition.id, before: workout.startedAt) {
-            replacement.sets = previous.exercise.sets.map { $0.freshTarget() }
+        if let previous = previousExercise(for: definition.id, before: workout.startedAt),
+           previous.exercise.definition.loadType == definition.loadType,
+           previous.exercise.definition.isUnilateral == definition.isUnilateral {
+            replacement.sets = previous.exercise.sets.map { $0.target(for: definition) }
         }
         updateActive {
             guard let index = $0.exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
@@ -123,6 +187,7 @@ final class TrainingStore: ObservableObject {
     }
 
     func toggleSet(exerciseID: UUID, setID: UUID) {
+        guard isDataAvailable else { return }
         guard var workout = data.activeWorkout,
               let exerciseIndex = workout.exercises.firstIndex(where: { $0.id == exerciseID }),
               let setIndex = workout.exercises[exerciseIndex].sets.firstIndex(where: { $0.id == setID }) else { return }
@@ -135,6 +200,8 @@ final class TrainingStore: ObservableObject {
             set.isCompleted = true; set.completedAt = Date()
             if type == .bodyweight {
                 set.weight = 0
+                set.sides?.left.weight = 0
+                set.sides?.right.weight = 0
                 set.dropSteps = set.dropSteps?.map { DropStep(id: $0.id, weight: 0, reps: $0.reps) }
             }
         }
@@ -143,7 +210,7 @@ final class TrainingStore: ObservableObject {
         candidate.activeWorkout = workout
         do { try Persistence.validate(candidate) }
         catch {
-            errorMessage = workout.exercises[exerciseIndex].definition.loadType == .external
+            errorMessage = set.sides != nil ? "Заполни обе стороны: от 1 до 999 повторов и корректный вес. Для внешнего веса нужно значение больше нуля." : workout.exercises[exerciseIndex].definition.loadType == .external
                 ? "Укажи вес больше нуля и число повторений от 1 до 999 для всех ступеней подхода."
                 : "Укажи число повторений от 1 до 999 и неотрицательный вес для всех ступеней подхода."
             return
@@ -164,44 +231,47 @@ final class TrainingStore: ObservableObject {
             rest = nil
         }
         candidate.restTimer = rest
-        let timerChanged = candidate.restTimer != data.restTimer
+        let notificationChanged = candidate.restTimer != data.restTimer || nextAction !=
+            WorkoutFlow.nextAction(in: workout, after: rest?.sourceSetID)
         data = candidate
-        if notificationsEnabled, timerChanged {
-            RestNotificationService.shared.cancel()
-            if let rest { RestNotificationService.shared.schedule(rest: rest) }
-        }
+        if notificationChanged { synchronizeRestNotification(requestAuthorization: set.isCompleted && rest != nil) }
         persist()
     }
 
     @discardableResult
     func finishWorkout() -> Workout? {
+        guard isDataAvailable else { return nil }
         guard var workout = data.activeWorkout else { return nil }
         guard workout.completedSets > 0 else { errorMessage = "Сначала отметь хотя бы один выполненный подход."; return nil }
         workout.exercises = workout.exercises.compactMap { item in
             var exercise = item
             exercise.sets = item.sets.filter(\.isCompleted)
-            return exercise.sets.isEmpty ? nil : exercise
+            return exercise.sets.isEmpty && exercise.discomfort == nil ? nil : exercise
         }
         SupersetEditing.normalize(&workout.exercises)
         workout.endedAt = Date()
         data.workouts.append(workout)
         data.activeWorkout = nil; data.restTimer = nil
-        if notificationsEnabled { RestNotificationService.shared.cancel() }
+        synchronizeRestNotification()
         persist()
+        synchronizeInactivityReminder()
         return workout
     }
 
     func discardWorkout() {
+        guard isDataAvailable else { return }
         data.activeWorkout = nil; data.restTimer = nil
-        if notificationsEnabled { RestNotificationService.shared.cancel() }
+        synchronizeRestNotification()
         persist()
     }
     func skipRest() {
+        guard isDataAvailable else { return }
         data.restTimer = nil
-        if notificationsEnabled { RestNotificationService.shared.cancel() }
+        synchronizeRestNotification()
         persist()
     }
     func adjustRest(by seconds: Int) {
+        guard isDataAvailable else { return }
         guard var timer = data.restTimer else { return }
         let remaining = timer.remaining(at: Date())
         let newRemaining = max(0, min(3600, remaining + seconds))
@@ -209,10 +279,11 @@ final class TrainingStore: ObservableObject {
         timer.endsAt = Date().addingTimeInterval(Double(newRemaining))
         timer.duration = max(timer.duration, newRemaining)
         data.restTimer = timer
-        if notificationsEnabled { RestNotificationService.shared.schedule(rest: timer) }
+        synchronizeRestNotification()
         persist()
     }
     func saveRoutine(_ routine: Routine) {
+        guard isDataAvailable else { return }
         var value = routine
         SupersetEditing.normalize(&value.exercises)
         value.name = value.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -225,8 +296,14 @@ final class TrainingStore: ObservableObject {
         data = candidate
         persist()
     }
-    func deleteRoutine(_ id: UUID) { data.routines.removeAll { $0.id == id }; persist() }
+    func deleteRoutine(_ id: UUID) {
+        guard isDataAvailable else { return }
+        data.routines.removeAll { $0.id == id }
+        data.weeklySchedule?.removeAll { $0.routineID == id }
+        persist()
+    }
     func saveExercise(_ exercise: ExerciseDefinition) {
+        guard isDataAvailable else { return }
         var value = exercise
         value.name = value.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.name.isEmpty else { errorMessage = "Добавь название упражнения."; return }
@@ -235,22 +312,31 @@ final class TrainingStore: ObservableObject {
         persist()
     }
     func saveWorkout(_ workout: Workout) {
+        guard isDataAvailable else { return }
         guard workout.endedAt != nil, workout.endedAt! >= workout.startedAt else { errorMessage = "Время окончания должно быть позже начала."; return }
         var candidate = data
         if let index = candidate.workouts.firstIndex(where: { $0.id == workout.id }) { candidate.workouts[index] = workout }
         else { candidate.workouts.append(workout) }
-        do { try Persistence.validate(candidate); data = candidate; persist() }
+        do { try Persistence.validate(candidate); data = candidate; persist(); synchronizeInactivityReminder() }
         catch { errorMessage = "Проверь вес, повторы и время тренировки. \(error.localizedDescription)" }
     }
-    func deleteWorkout(_ id: UUID) { data.workouts.removeAll { $0.id == id }; persist() }
+    func deleteWorkout(_ id: UUID) {
+        guard isDataAvailable else { return }
+        data.workouts.removeAll { $0.id == id }; persist(); synchronizeInactivityReminder()
+    }
     func addMeasurement(_ measurement: BodyMeasurement) {
+        guard isDataAvailable else { return }
         var candidate = data
         candidate.measurements.append(measurement)
         do { try Persistence.validate(candidate); data = candidate; persist() }
         catch { errorMessage = "Измерения должны быть положительными числами." }
     }
-    func deleteMeasurement(_ id: UUID) { data.measurements.removeAll { $0.id == id }; persist() }
+    func deleteMeasurement(_ id: UUID) {
+        guard isDataAvailable else { return }
+        data.measurements.removeAll { $0.id == id }; persist()
+    }
     func setProfileName(_ name: String) {
+        guard isDataAvailable else { return }
         let value = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
         data.profileName = value; persist()
@@ -258,14 +344,127 @@ final class TrainingStore: ObservableObject {
     func previousExercise(for exerciseID: UUID, before: Date = Date()) -> (date: Date, exercise: WorkoutExercise)? {
         TrainingMath.previousExercise(for: exerciseID, before: before, in: data.workouts)
     }
+
+    @discardableResult
+    func repeatWorkout(_ source: Workout, now: Date = Date()) -> Bool {
+        guard isDataAvailable else { return false }
+        guard data.activeWorkout == nil, source.endedAt != nil else { return false }
+        var candidate = data
+        candidate.activeWorkout = WorkoutFlow.repeatedWorkout(from: source, now: now)
+        candidate.restTimer = nil
+        do {
+            try writeJournal(candidate)
+            data = candidate
+            expandedCompletedExercises = []
+            synchronizeWorkoutActivity()
+            synchronizeRestNotification()
+            return true
+        } catch {
+            errorMessage = "Не удалось начать тренировку: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    @discardableResult
+    func saveAsRoutine(_ source: Workout, name: String) -> Routine? {
+        guard isDataAvailable else { return nil }
+        let routine = WorkoutFlow.routine(from: source, name: name)
+        guard !routine.name.isEmpty else { errorMessage = "Добавь название программы."; return nil }
+        var candidate = data
+        candidate.routines.append(routine)
+        do {
+            try writeJournal(candidate)
+            data = candidate
+            return routine
+        } catch {
+            errorMessage = "Не удалось сохранить программу: \(error.localizedDescription)"
+            return nil
+        }
+    }
+
+    func synchronizeRestNotification(requestAuthorization: Bool = false) {
+        guard isDataAvailable, notificationsEnabled else { return }
+        let preferences = data.restSignalPreferences ?? RestSignalPreferences()
+        let request: RestAlertRequest?
+        if let rest = data.restTimer, let workout = data.activeWorkout {
+            request = RestAlertRequest.workout(workout, rest: rest, preferences: preferences)
+        } else { request = nil }
+        RestAlertService.shared.onReceipt = { [weak self] id, receipt in
+            guard let self, self.data.restTimer?.id == id, self.data.restTimer?.alertReceipt != receipt else { return }
+            self.data.restTimer?.alertReceipt = receipt
+            self.persist()
+        }
+        RestAlertService.shared.synchronize(request: request, receipt: data.restTimer?.alertReceipt,
+                                           preferences: preferences, requestAuthorization: requestAuthorization)
+    }
+
+    func setRestSignalPreferences(_ preferences: RestSignalPreferences) {
+        guard isDataAvailable else { return }
+        var candidate = data
+        candidate.restSignalPreferences = preferences
+        do {
+            try writeJournal(candidate)
+            data = candidate
+            synchronizeRestNotification()
+        } catch { errorMessage = "Не удалось сохранить настройки сигнала: \(error.localizedDescription)" }
+    }
+
+    func synchronizeWorkoutActivity() {
+        guard isDataAvailable, notificationsEnabled else { return } // Test journals never create system activities.
+        WorkoutActivityService.shared.synchronize(workout: activeWorkout, rest: restTimer)
+    }
+
+    func setWeeklyAssignment(_ assignment: WeeklyAssignment) {
+        guard isDataAvailable else { return }
+        var candidate = data
+        var schedule = candidate.weeklySchedule ?? []
+        schedule.removeAll { $0.weekday == assignment.weekday }
+        if assignment.isRestDay || assignment.routineID != nil { schedule.append(assignment) }
+        candidate.weeklySchedule = schedule
+        do {
+            try writeJournal(candidate)
+            data = candidate
+        } catch { errorMessage = "Не удалось сохранить расписание: \(error.localizedDescription)" }
+    }
+
+    func setInactivityReminder(enabled: Bool, days: Int, now: Date = Date()) {
+        guard isDataAvailable else { return }
+        guard [3, 5, 7].contains(days) else { return }
+        var candidate = data
+        var preferences = candidate.reminderPreferences ?? ReminderPreferences()
+        if enabled && !preferences.enabled {
+            preferences.enabledAt = now
+            preferences.lastScheduledCycle = nil
+        }
+        preferences.enabled = enabled
+        preferences.intervalDays = days
+        candidate.reminderPreferences = preferences
+        do {
+            try writeJournal(candidate)
+            data = candidate
+            synchronizeInactivityReminder()
+        } catch { errorMessage = "Не удалось сохранить напоминания: \(error.localizedDescription)" }
+    }
+
+    func synchronizeInactivityReminder() {
+        guard isDataAvailable, notificationsEnabled else { return }
+        InactivityReminderService.shared.synchronize(InactivityReminders.decision(for: data)) { [weak self] cycle in
+            guard let self, case .schedule(let plan) = InactivityReminders.decision(for: self.data), plan.cycle == cycle,
+                  self.data.reminderPreferences?.lastScheduledCycle != cycle else { return }
+            self.data.reminderPreferences?.lastScheduledCycle = cycle
+            self.persist()
+        }
+    }
     func personalRecords(in workout: Workout) -> Int { TrainingMath.records(in: workout, history: data.workouts) }
     func attachHeartRate(workoutID: UUID, average: Double, healthWorkoutID: UUID?) {
+        guard isDataAvailable else { return }
         guard average.isFinite, (20...300).contains(average), let index = data.workouts.firstIndex(where: { $0.id == workoutID }) else { return }
         data.workouts[index].averageHeartRate = average
         data.workouts[index].healthWorkoutID = healthWorkoutID
         persist()
     }
     func exportBackup() throws -> URL {
+        guard isDataAvailable else { throw CocoaError(.fileReadNoPermission) }
         let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd-HHmmss"
         let url = URL.temporaryDirectory.appending(path: "Podhod-\(formatter.string(from: Date())).json")
         try Persistence.encoder.encode(data).write(to: url, options: .atomic)
@@ -276,11 +475,12 @@ final class TrainingStore: ObservableObject {
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         let imported = try Persistence.decode(Data(contentsOf: url))
         // Commit to disk first: a failed import never replaces the in-memory journal.
-        try Persistence.write(imported, to: fileURL)
+        try storage.write(imported, fileURL)
         data = imported
-        if notificationsEnabled {
-            RestNotificationService.shared.cancel()
-            if let rest = data.restTimer, rest.remaining(at: Date()) > 0 { RestNotificationService.shared.schedule(rest: rest) }
-        }
+        isDataAvailable = true; isSavePending = false; clearStorageError()
+        expandedCompletedExercises = []
+        synchronizeRestNotification()
+        synchronizeInactivityReminder()
+        synchronizeWorkoutActivity()
     }
 }

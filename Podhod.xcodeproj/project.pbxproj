@@ -28,6 +28,40 @@
 		EC3BFCEB7D8379D51EAE10EA /* Podhod/Core/TrainingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F28086E709C7A2DB65CAAD /* Podhod/Core/TrainingStore.swift */; };
 		F3DFC4C06D3D06DFAAD13881 /* Podhod/Services/HealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F902A4FAEDEAFA0579CCFCBA /* Podhod/Services/HealthService.swift */; };
 		FB90684E69A6C96ED866993E /* Podhod/Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5174955314CC661E58E2B8FD /* Podhod/Resources/Assets.xcassets */; };
+		6FF521C10EBDE6BEF39A3E6D /* Podhod/Core/WorkoutFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A6E0677217AEE74C8F7A91 /* Podhod/Core/WorkoutFlow.swift */; };
+		AA2F4D8688C9F54B9B6F806E /* Podhod/Views/WorkoutInteractionComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE9C6CCCEEF322FF00641EF /* Podhod/Views/WorkoutInteractionComponents.swift */; };
+		C3F50CB128DA0F388942792A /* PodhodTests/WorkoutUXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3841726A8377C31B06460FF /* PodhodTests/WorkoutUXTests.swift */; };
+		966FF1A19BC383C9A93AFDFD /* Podhod/Core/ExercisePerformance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F6259636AA8921B79034CE5 /* Podhod/Core/ExercisePerformance.swift */; };
+		22A9168992104B687946FC48 /* Podhod/Views/ExercisePerformanceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153079E1F0A0A9AB1EDE9775 /* Podhod/Views/ExercisePerformanceViews.swift */; };
+		D49DF597E8C7B2F17966A847 /* Podhod/Core/WorkoutComparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1008FAAC8A47788F7FBDDD /* Podhod/Core/WorkoutComparison.swift */; };
+		CB3E12D026E49A054288471F /* Podhod/Views/WorkoutComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C2B19346D1524EBB4A57BE /* Podhod/Views/WorkoutComparisonView.swift */; };
+		3D24951A9AA35670AC0576A5 /* PodhodTests/ExercisePerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A543A486F5C827C46070B2 /* PodhodTests/ExercisePerformanceTests.swift */; };
+		9BAF84C5063C84D283FB1C8C /* Podhod/Core/TrainingPlanning.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F23E2495594CF1F41DFBB2 /* Podhod/Core/TrainingPlanning.swift */; };
+		6F1A525419E0CCB0BAE36EC0 /* Podhod/Services/InactivityReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508AB8B0987B0F68411D4EF6 /* Podhod/Services/InactivityReminderService.swift */; };
+		A53341C6156FDCB74A1485D3 /* Podhod/Views/TrainingPlanningViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AC842BE64857D15018A237 /* Podhod/Views/TrainingPlanningViews.swift */; };
+		B225E42DFAD779762CABC842 /* PodhodTests/TrainingPlanningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08F8BFDEFF1F18E54FB63494 /* PodhodTests/TrainingPlanningTests.swift */; };
+		11CA8E72A149D9BC2674A875 /* Shared/WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83BCA69ED4CBD5391FF51855 /* Shared/WorkoutActivityAttributes.swift */; };
+		91C6CF8DA6F188434F0CD068 /* Podhod/Core/WorkoutActivityState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F303A67B9848DF06B51875 /* Podhod/Core/WorkoutActivityState.swift */; };
+		B2637AF951F6EBBC0F7EA7F9 /* Podhod/Services/WorkoutActivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2D9D56F33D525A97155365 /* Podhod/Services/WorkoutActivityService.swift */; };
+		7579FE6D34F8FE66A616F84B /* Podhod/Core/RestSignalPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED21169B3058DA18D563E191 /* Podhod/Core/RestSignalPreferences.swift */; };
+		353FE1FEFA8D8E1BEF7159DF /* widget source build */ = { isa = PBXBuildFile; fileRef = 27B8A16D9D842DEF672B4C2A; };
+		CEAB69D599FC444735D1F1F3 /* widget attributes build */ = { isa = PBXBuildFile; fileRef = 83BCA69ED4CBD5391FF51855; };
+		5D57073B5DB13A5C3233E456 /* embed widget */ = { isa = PBXBuildFile; fileRef = 9BF124AC7E975977B2D7996D; settings = { ATTRIBUTES = (RemoveHeadersOnCopy,); }; };
+		0AE4E87C1B1D9C6696E9A68A /* rest sound build */ = { isa = PBXBuildFile; fileRef = 1034A7AA65470D649BD641AC; };
+		A5E46BFF601C714FE0D50F37 /* PodhodTests/SystemIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31BD3DDA0960C120CDE2DFF8 /* PodhodTests/SystemIntegrationTests.swift */; };
+		073B6C0D59E03948306B61AA /* Podhod/Core/RestAlertPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0353B087B1AAAA0DC1D0864B /* Podhod/Core/RestAlertPolicy.swift */; };
+		CCF3E44B6684C08CA4767340 /* Podhod/Services/RestAlertBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831755EFF74CB2CC880DBF6E /* Podhod/Services/RestAlertBackend.swift */; };
+		4371046788E7A1BF11EEC768 /* Podhod/Services/AlarmKitRestBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDD1B6DA760A60B7960E7190 /* Podhod/Services/AlarmKitRestBackend.swift */; };
+		3A7B019B23260D38B7592457 /* Podhod/Services/RestAlertService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B811080BE91960CC4C5C769E /* Podhod/Services/RestAlertService.swift */; };
+		FA30B768B6807987931CDFDC /* Podhod/Services/RestSoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC59EA3EDE3AE3E31871139E /* Podhod/Services/RestSoundPlayer.swift */; };
+		33A53A60F1C72DD99B16608F /* Podhod/Views/RestAlertSettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A23BCC9173796B88E98DB45 /* Podhod/Views/RestAlertSettingsViews.swift */; };
+		BAD69A6272A146D2CF9FEC5A /* Podhod/Resources/rest-alarm.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3677A2DF52712A82E3F0A73D; };
+		8022F75F6EA0D54F1F29B71D /* Podhod/Resources/rest-bell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 2010B33427969DBDDB9A4D79; };
+		804001C299079507DE4B8D0C /* Podhod/Resources/rest-electronic.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1709C0231200281C49B2ECFA; };
+		68E970AEFF1AB157511F591B /* Podhod/Resources/rest-short.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8468E46F278B553C9C72DBB6; };
+		D433DFA4AD555F85252AC6E3 /* Podhod/Resources/rest-triple.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4F7C2432DDB657C0DF7BBA32; };
+		92C6A953EF25CFD8EFB00CB8 /* PodhodTests/RestAlertTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F1C4F9991497C7BC94D1892 /* PodhodTests/RestAlertTests.swift */; };
+		320E0BDE2664B45F93FC980C /* PodhodTests/JournalAccessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4B6E4811C4740AB998EA85 /* PodhodTests/JournalAccessTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,7 +79,12 @@
 			remoteGlobalIDString = C9EFE7DEE7442B36C22F84F1;
 			remoteInfo = Podhod;
 		};
+		344E2E17FC066F46EB7AECF3 /* widget proxy */ = { isa = PBXContainerItemProxy; containerPortal = 98F54143AB4E86B28C3AFEE0; proxyType = 1; remoteGlobalIDString = 2E39FC622BAE8DCAD91E7202; remoteInfo = PodhodActivity; };
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		726C8936318FA77F6AA732C7 /* Embed App Extensions */ = { isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (5D57073B5DB13A5C3233E456,); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		03C5458EDDA5FF0537159B9A /* PodhodTests/CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/CoreTests.swift; sourceTree = "<group>"; };
@@ -74,6 +113,40 @@
 		DDCFF626AB3C95E0D18F6176 /* Podhod/Views/TrainingEditorComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/TrainingEditorComponents.swift; sourceTree = "<group>"; };
 		F15AF6067293510CE2933EA2 /* Podhod/Core/SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/SeedData.swift; sourceTree = "<group>"; };
 		F902A4FAEDEAFA0579CCFCBA /* Podhod/Services/HealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/HealthService.swift; sourceTree = "<group>"; };
+		89A6E0677217AEE74C8F7A91 /* Podhod/Core/WorkoutFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/WorkoutFlow.swift; sourceTree = "<group>"; };
+		ABE9C6CCCEEF322FF00641EF /* Podhod/Views/WorkoutInteractionComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/WorkoutInteractionComponents.swift; sourceTree = "<group>"; };
+		C3841726A8377C31B06460FF /* PodhodTests/WorkoutUXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/WorkoutUXTests.swift; sourceTree = "<group>"; };
+		6F6259636AA8921B79034CE5 /* Podhod/Core/ExercisePerformance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/ExercisePerformance.swift; sourceTree = "<group>"; };
+		153079E1F0A0A9AB1EDE9775 /* Podhod/Views/ExercisePerformanceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/ExercisePerformanceViews.swift; sourceTree = "<group>"; };
+		1C1008FAAC8A47788F7FBDDD /* Podhod/Core/WorkoutComparison.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/WorkoutComparison.swift; sourceTree = "<group>"; };
+		D1C2B19346D1524EBB4A57BE /* Podhod/Views/WorkoutComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/WorkoutComparisonView.swift; sourceTree = "<group>"; };
+		73A543A486F5C827C46070B2 /* PodhodTests/ExercisePerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/ExercisePerformanceTests.swift; sourceTree = "<group>"; };
+		E7F23E2495594CF1F41DFBB2 /* Podhod/Core/TrainingPlanning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/TrainingPlanning.swift; sourceTree = "<group>"; };
+		508AB8B0987B0F68411D4EF6 /* Podhod/Services/InactivityReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/InactivityReminderService.swift; sourceTree = "<group>"; };
+		27AC842BE64857D15018A237 /* Podhod/Views/TrainingPlanningViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/TrainingPlanningViews.swift; sourceTree = "<group>"; };
+		08F8BFDEFF1F18E54FB63494 /* PodhodTests/TrainingPlanningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/TrainingPlanningTests.swift; sourceTree = "<group>"; };
+		83BCA69ED4CBD5391FF51855 /* Shared/WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
+		B8F303A67B9848DF06B51875 /* Podhod/Core/WorkoutActivityState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/WorkoutActivityState.swift; sourceTree = "<group>"; };
+		FC2D9D56F33D525A97155365 /* Podhod/Services/WorkoutActivityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/WorkoutActivityService.swift; sourceTree = "<group>"; };
+		ED21169B3058DA18D563E191 /* Podhod/Core/RestSignalPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/RestSignalPreferences.swift; sourceTree = "<group>"; };
+		27B8A16D9D842DEF672B4C2A /* widget source */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodActivity/PodhodActivityWidget.swift; sourceTree = "<group>"; };
+		1E79930AF15B9061781200E8 /* widget info */ = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PodhodActivity/Info.plist; sourceTree = "<group>"; };
+		1034A7AA65470D649BD641AC /* rest sound */ = { isa = PBXFileReference; lastKnownFileType = audio.wav; path = Podhod/Resources/rest-double.wav; sourceTree = "<group>"; };
+		9BF124AC7E975977B2D7996D /* widget product */ = { isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = PodhodActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		31BD3DDA0960C120CDE2DFF8 /* PodhodTests/SystemIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/SystemIntegrationTests.swift; sourceTree = "<group>"; };
+		0353B087B1AAAA0DC1D0864B /* Podhod/Core/RestAlertPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Core/RestAlertPolicy.swift; sourceTree = "<group>"; };
+		831755EFF74CB2CC880DBF6E /* Podhod/Services/RestAlertBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/RestAlertBackend.swift; sourceTree = "<group>"; };
+		FDD1B6DA760A60B7960E7190 /* Podhod/Services/AlarmKitRestBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/AlarmKitRestBackend.swift; sourceTree = "<group>"; };
+		B811080BE91960CC4C5C769E /* Podhod/Services/RestAlertService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/RestAlertService.swift; sourceTree = "<group>"; };
+		CC59EA3EDE3AE3E31871139E /* Podhod/Services/RestSoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Services/RestSoundPlayer.swift; sourceTree = "<group>"; };
+		5A23BCC9173796B88E98DB45 /* Podhod/Views/RestAlertSettingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podhod/Views/RestAlertSettingsViews.swift; sourceTree = "<group>"; };
+		3677A2DF52712A82E3F0A73D /* Podhod/Resources/rest-alarm.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Podhod/Resources/rest-alarm.wav; sourceTree = "<group>"; };
+		2010B33427969DBDDB9A4D79 /* Podhod/Resources/rest-bell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Podhod/Resources/rest-bell.wav; sourceTree = "<group>"; };
+		1709C0231200281C49B2ECFA /* Podhod/Resources/rest-electronic.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Podhod/Resources/rest-electronic.wav; sourceTree = "<group>"; };
+		8468E46F278B553C9C72DBB6 /* Podhod/Resources/rest-short.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Podhod/Resources/rest-short.wav; sourceTree = "<group>"; };
+		4F7C2432DDB657C0DF7BBA32 /* Podhod/Resources/rest-triple.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Podhod/Resources/rest-triple.wav; sourceTree = "<group>"; };
+		2F1C4F9991497C7BC94D1892 /* PodhodTests/RestAlertTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/RestAlertTests.swift; sourceTree = "<group>"; };
+		EB4B6E4811C4740AB998EA85 /* PodhodTests/JournalAccessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodhodTests/JournalAccessTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,12 +171,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		028E9A914C3FFCF17827E229 /* widget frameworks */ = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		00C45FD35CB0F9C5F764F070 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				9BF124AC7E975977B2D7996D /* PodhodActivity.appex */,
 				6FC7A2CB19E6C1A58AC4B5C6 /* Podhod.app */,
 				3D4FB19C1B777E35023F3F0B /* PodhodTests.xctest */,
 				530B0CDBC73C452D9849A36B /* PodhodUITests.xctest */,
@@ -114,6 +189,7 @@
 		ADCF10F76EBF2A74473E9DC4 = {
 			isa = PBXGroup;
 			children = (
+				456484F97E402ABE2CE007DF /* widget group */,
 				CF8D0BD4B75E8C2C174692A5 /* Подход */,
 				EEFE21A1443933CA4DE017DA /* Tests */,
 				00C45FD35CB0F9C5F764F070 /* Products */,
@@ -127,6 +203,25 @@
 				AA329F46C49F5A287E174D38 /* Podhod/Core/Persistence.swift */,
 				F15AF6067293510CE2933EA2 /* Podhod/Core/SeedData.swift */,
 				7C538341843482A66CBB0DAD /* Podhod/Core/TrainingMath.swift */,
+				5A23BCC9173796B88E98DB45 /* Podhod/Views/RestAlertSettingsViews.swift */,
+				CC59EA3EDE3AE3E31871139E /* Podhod/Services/RestSoundPlayer.swift */,
+				B811080BE91960CC4C5C769E /* Podhod/Services/RestAlertService.swift */,
+				FDD1B6DA760A60B7960E7190 /* Podhod/Services/AlarmKitRestBackend.swift */,
+				831755EFF74CB2CC880DBF6E /* Podhod/Services/RestAlertBackend.swift */,
+				0353B087B1AAAA0DC1D0864B /* Podhod/Core/RestAlertPolicy.swift */,
+				ED21169B3058DA18D563E191 /* Podhod/Core/RestSignalPreferences.swift */,
+				FC2D9D56F33D525A97155365 /* Podhod/Services/WorkoutActivityService.swift */,
+				B8F303A67B9848DF06B51875 /* Podhod/Core/WorkoutActivityState.swift */,
+				83BCA69ED4CBD5391FF51855 /* Shared/WorkoutActivityAttributes.swift */,
+				27AC842BE64857D15018A237 /* Podhod/Views/TrainingPlanningViews.swift */,
+				508AB8B0987B0F68411D4EF6 /* Podhod/Services/InactivityReminderService.swift */,
+				E7F23E2495594CF1F41DFBB2 /* Podhod/Core/TrainingPlanning.swift */,
+				D1C2B19346D1524EBB4A57BE /* Podhod/Views/WorkoutComparisonView.swift */,
+				1C1008FAAC8A47788F7FBDDD /* Podhod/Core/WorkoutComparison.swift */,
+				153079E1F0A0A9AB1EDE9775 /* Podhod/Views/ExercisePerformanceViews.swift */,
+				6F6259636AA8921B79034CE5 /* Podhod/Core/ExercisePerformance.swift */,
+				ABE9C6CCCEEF322FF00641EF /* Podhod/Views/WorkoutInteractionComponents.swift */,
+				89A6E0677217AEE74C8F7A91 /* Podhod/Core/WorkoutFlow.swift */,
 				64F28086E709C7A2DB65CAAD /* Podhod/Core/TrainingStore.swift */,
 				05B6835231CB734A5FE1941F /* Podhod/PodhodApp.swift */,
 				F902A4FAEDEAFA0579CCFCBA /* Podhod/Services/HealthService.swift */,
@@ -143,6 +238,12 @@
 				22A2AA3603C3576F70575667 /* Podhod/Views/TrainingViews.swift */,
 				0604FDB637B2B7C46E138375 /* Podhod/Resources/Info.plist */,
 				A34DF02EAD6D61F5D63CCFE0 /* Podhod/Resources/Podhod.entitlements */,
+				1034A7AA65470D649BD641AC /* rest sound */,
+				3677A2DF52712A82E3F0A73D /* Podhod/Resources/rest-alarm.wav */,
+				2010B33427969DBDDB9A4D79 /* Podhod/Resources/rest-bell.wav */,
+				1709C0231200281C49B2ECFA /* Podhod/Resources/rest-electronic.wav */,
+				8468E46F278B553C9C72DBB6 /* Podhod/Resources/rest-short.wav */,
+				4F7C2432DDB657C0DF7BBA32 /* Podhod/Resources/rest-triple.wav */,
 				5174955314CC661E58E2B8FD /* Podhod/Resources/Assets.xcassets */,
 			);
 			name = "Подход";
@@ -152,11 +253,18 @@
 			isa = PBXGroup;
 			children = (
 				03C5458EDDA5FF0537159B9A /* PodhodTests/CoreTests.swift */,
+				2F1C4F9991497C7BC94D1892 /* PodhodTests/RestAlertTests.swift */,
+				EB4B6E4811C4740AB998EA85 /* PodhodTests/JournalAccessTests.swift */,
+				31BD3DDA0960C120CDE2DFF8 /* PodhodTests/SystemIntegrationTests.swift */,
+				08F8BFDEFF1F18E54FB63494 /* PodhodTests/TrainingPlanningTests.swift */,
+				73A543A486F5C827C46070B2 /* PodhodTests/ExercisePerformanceTests.swift */,
+				C3841726A8377C31B06460FF /* PodhodTests/WorkoutUXTests.swift */,
 				0B4A7868156623C7AE502EC4 /* PodhodUITests/WorkoutFlowTests.swift */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
 		};
+		456484F97E402ABE2CE007DF /* widget group */ = { isa = PBXGroup; name = "Экран блокировки"; children = (27B8A16D9D842DEF672B4C2A, 1E79930AF15B9061781200E8,); sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -185,10 +293,12 @@
 				76C5EF7A1B3342EA698F9FFB /* Sources */,
 				602D90922CB1B1E4134FB61F /* Frameworks */,
 				2AFF87222E45CE7E6453459B /* Resources */,
+				726C8936318FA77F6AA732C7 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				18E672C1EABE4972847E3360 /* widget dependency */,
 			);
 			name = Podhod;
 			productName = Podhod;
@@ -213,6 +323,7 @@
 			productReference = 530B0CDBC73C452D9849A36B /* PodhodUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		2E39FC622BAE8DCAD91E7202 /* PodhodActivity */ = { isa = PBXNativeTarget; buildConfigurationList = 99E69191821F3D77FCFD6636; buildPhases = (8271C730F713FE5AEB4B036B, 028E9A914C3FFCF17827E229, 3A129F6BFB85A9095C26164D,); buildRules = (); dependencies = (); name = PodhodActivity; productName = PodhodActivity; productReference = 9BF124AC7E975977B2D7996D; productType = "com.apple.product-type.app-extension"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -247,6 +358,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				2E39FC622BAE8DCAD91E7202 /* PodhodActivity */,
 				C9EFE7DEE7442B36C22F84F1 /* Podhod */,
 				B27571EBA91D340CB47BBAEC /* PodhodTests */,
 				D8307469A69DAEB7C74D8AD3 /* PodhodUITests */,
@@ -259,6 +371,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0AE4E87C1B1D9C6696E9A68A /* rest sound build */,
+				BAD69A6272A146D2CF9FEC5A /* Podhod/Resources/rest-alarm.wav in Resources */,
+				8022F75F6EA0D54F1F29B71D /* Podhod/Resources/rest-bell.wav in Resources */,
+				804001C299079507DE4B8D0C /* Podhod/Resources/rest-electronic.wav in Resources */,
+				68E970AEFF1AB157511F591B /* Podhod/Resources/rest-short.wav in Resources */,
+				D433DFA4AD555F85252AC6E3 /* Podhod/Resources/rest-triple.wav in Resources */,
 				FB90684E69A6C96ED866993E /* Podhod/Resources/Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -277,6 +395,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3A129F6BFB85A9095C26164D /* widget resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -285,6 +404,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				9E5388C271E7E0110AD024A0 /* PodhodTests/CoreTests.swift in Sources */,
+				92C6A953EF25CFD8EFB00CB8 /* PodhodTests/RestAlertTests.swift in Sources */,
+				320E0BDE2664B45F93FC980C /* PodhodTests/JournalAccessTests.swift in Sources */,
+				A5E46BFF601C714FE0D50F37 /* PodhodTests/SystemIntegrationTests.swift in Sources */,
+				B225E42DFAD779762CABC842 /* PodhodTests/TrainingPlanningTests.swift in Sources */,
+				3D24951A9AA35670AC0576A5 /* PodhodTests/ExercisePerformanceTests.swift in Sources */,
+				C3F50CB128DA0F388942792A /* PodhodTests/WorkoutUXTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,6 +429,25 @@
 				0363DE380E01741635262C23 /* Podhod/Core/Persistence.swift in Sources */,
 				111AE1D3489C8D7BFD448235 /* Podhod/Core/SeedData.swift in Sources */,
 				609828C997B4BF801EAA3366 /* Podhod/Core/TrainingMath.swift in Sources */,
+				33A53A60F1C72DD99B16608F /* Podhod/Views/RestAlertSettingsViews.swift in Sources */,
+				FA30B768B6807987931CDFDC /* Podhod/Services/RestSoundPlayer.swift in Sources */,
+				3A7B019B23260D38B7592457 /* Podhod/Services/RestAlertService.swift in Sources */,
+				4371046788E7A1BF11EEC768 /* Podhod/Services/AlarmKitRestBackend.swift in Sources */,
+				CCF3E44B6684C08CA4767340 /* Podhod/Services/RestAlertBackend.swift in Sources */,
+				073B6C0D59E03948306B61AA /* Podhod/Core/RestAlertPolicy.swift in Sources */,
+				7579FE6D34F8FE66A616F84B /* Podhod/Core/RestSignalPreferences.swift in Sources */,
+				B2637AF951F6EBBC0F7EA7F9 /* Podhod/Services/WorkoutActivityService.swift in Sources */,
+				91C6CF8DA6F188434F0CD068 /* Podhod/Core/WorkoutActivityState.swift in Sources */,
+				11CA8E72A149D9BC2674A875 /* Shared/WorkoutActivityAttributes.swift in Sources */,
+				A53341C6156FDCB74A1485D3 /* Podhod/Views/TrainingPlanningViews.swift in Sources */,
+				6F1A525419E0CCB0BAE36EC0 /* Podhod/Services/InactivityReminderService.swift in Sources */,
+				9BAF84C5063C84D283FB1C8C /* Podhod/Core/TrainingPlanning.swift in Sources */,
+				CB3E12D026E49A054288471F /* Podhod/Views/WorkoutComparisonView.swift in Sources */,
+				D49DF597E8C7B2F17966A847 /* Podhod/Core/WorkoutComparison.swift in Sources */,
+				22A9168992104B687946FC48 /* Podhod/Views/ExercisePerformanceViews.swift in Sources */,
+				966FF1A19BC383C9A93AFDFD /* Podhod/Core/ExercisePerformance.swift in Sources */,
+				AA2F4D8688C9F54B9B6F806E /* Podhod/Views/WorkoutInteractionComponents.swift in Sources */,
+				6FF521C10EBDE6BEF39A3E6D /* Podhod/Core/WorkoutFlow.swift in Sources */,
 				EC3BFCEB7D8379D51EAE10EA /* Podhod/Core/TrainingStore.swift in Sources */,
 				2A0E8259B17B809F50203955 /* Podhod/PodhodApp.swift in Sources */,
 				F3DFC4C06D3D06DFAAD13881 /* Podhod/Services/HealthService.swift in Sources */,
@@ -321,6 +465,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8271C730F713FE5AEB4B036B /* widget sources */ = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (353FE1FEFA8D8E1BEF7159DF, CEAB69D599FC444735D1F1F3,); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -334,6 +479,7 @@
 			target = C9EFE7DEE7442B36C22F84F1 /* Podhod */;
 			targetProxy = 940BD0050A88A8467AC517C6 /* PBXContainerItemProxy */;
 		};
+		18E672C1EABE4972847E3360 /* widget dependency */ = { isa = PBXTargetDependency; target = 2E39FC622BAE8DCAD91E7202; targetProxy = 344E2E17FC066F46EB7AECF3; };
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -525,6 +671,8 @@
 			};
 			name = Release;
 		};
+		A4220CF20D5A6D4B6D948E7E /* widget Debug */ = { isa = XCBuildConfiguration; buildSettings = { APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = SC67SPD9PH; CURRENT_PROJECT_VERSION = 2; MARKETING_VERSION = 1.1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = PodhodActivity/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhod.activity; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks",); }; name = Debug; };
+		A9A3549651B5AB85FE2393BB /* widget Release */ = { isa = XCBuildConfiguration; buildSettings = { APPLICATION_EXTENSION_API_ONLY = YES; CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = SC67SPD9PH; CURRENT_PROJECT_VERSION = 2; MARKETING_VERSION = 1.1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = PodhodActivity/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = app.personal.podhod.activity; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks",); }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -564,6 +712,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		99E69191821F3D77FCFD6636 /* widget configs */ = { isa = XCConfigurationList; buildConfigurations = (A4220CF20D5A6D4B6D948E7E, A9A3549651B5AB85FE2393BB,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;

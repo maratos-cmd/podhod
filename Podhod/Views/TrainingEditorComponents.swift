@@ -179,12 +179,44 @@ private struct SelectAllNumberInput: UIViewRepresentable {
     final class Coordinator: NSObject, UITextFieldDelegate, UIGestureRecognizerDelegate {
         var parent: SelectAllNumberInput
         weak var field: UITextField?
-        init(_ parent: SelectAllNumberInput) { self.parent = parent }
+        private var keyboardFrame: CGRect?
+        init(_ parent: SelectAllNumberInput) {
+            self.parent = parent
+            super.init()
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardShown(_:)), name: UIResponder.keyboardDidShowNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardHidden), name: UIResponder.keyboardWillHideNotification, object: nil)
+        }
+        deinit { NotificationCenter.default.removeObserver(self) }
 
         func textFieldDidBeginEditing(_ textField: UITextField) {
             parent.onFocusChange(true)
             NotificationCenter.default.post(name: .trainingNumberFocusChanged, object: nil, userInfo: ["focused": true])
             selectAllAfterTouch(textField)
+            DispatchQueue.main.async { [weak self] in self?.keepFieldVisible() }
+        }
+
+        @objc private func keyboardShown(_ notification: Notification) {
+            keyboardFrame = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue
+            keepFieldVisible()
+        }
+        @objc private func keyboardHidden() { keyboardFrame = nil }
+
+        private func keepFieldVisible() {
+            guard let field, field.isFirstResponder, let window = field.window, let keyboardFrame else { return }
+            // The native swipe row is a nested, non-scrolling List. Reveal fields in its outer scroll view.
+            var ancestor = field.superview
+            var owner: UIScrollView?
+            while let view = ancestor {
+                if let scroll = view as? UIScrollView, scroll.isScrollEnabled { owner = scroll }
+                ancestor = view.superview
+            }
+            guard let owner else { return }
+            let bottom = field.convert(field.bounds, to: window).maxY
+            let keyboardTop = window.convert(keyboardFrame, from: nil).minY
+            let delta = bottom + 92 - keyboardTop
+            guard delta > 0 else { return }
+            let maximum = max(-owner.adjustedContentInset.top, owner.contentSize.height - owner.bounds.height + owner.adjustedContentInset.bottom)
+            owner.setContentOffset(CGPoint(x: owner.contentOffset.x, y: min(maximum, owner.contentOffset.y + delta)), animated: true)
         }
 
         func textFieldDidEndEditing(_ textField: UITextField) {
@@ -322,17 +354,33 @@ private struct ExerciseCardFrames: PreferenceKey {
 struct ReorderableExerciseList<Header: View, Content: View>: View {
     let exercises: [WorkoutExercise]
     let onMove: (UUID, UUID) -> Void
+    var autoCollapseCompleted = false
+    var expandedCompleted: Binding<Set<UUID>> = .constant([])
     @ViewBuilder let header: (WorkoutExercise, Bool) -> Header
     @ViewBuilder let content: (WorkoutExercise) -> Content
     @StateObject private var drag = ExerciseReorderSession()
     @State private var frames: [UUID: CGRect] = [:]
+    @State private var completedIDs: Set<UUID> = []
+    @State private var editingField = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         VStack(spacing: 20) {
             ForEach(exercises) { exercise in
                 VStack(alignment: .leading, spacing: 14) {
-                    header(exercise, drag.activeID != nil)
+                    HStack(spacing: 6) {
+                        header(exercise, drag.activeID != nil || isCollapsed(exercise.id))
+                            .onTapGesture {
+                                if drag.activeID == nil && isCollapsed(exercise.id) { toggleExpansion(exercise.id) }
+                            }
+                        if autoCollapseCompleted && completedIDs.contains(exercise.id) && drag.activeID == nil {
+                            Button { toggleExpansion(exercise.id) } label: {
+                                Image(systemName: isCollapsed(exercise.id) ? "chevron.down" : "chevron.up")
+                                    .frame(width: 36, height: 44)
+                            }
+                            .accessibilityLabel("\(isCollapsed(exercise.id) ? "Развернуть" : "Свернуть"): \(exercise.definition.name)")
+                        }
+                    }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                         .background(ReorderHeaderGesture(
@@ -348,7 +396,13 @@ struct ReorderableExerciseList<Header: View, Content: View>: View {
                             },
                             onEnd: { finishDrag() }
                         ))
-                    if drag.activeID == nil { content(exercise) }
+                    if drag.activeID == nil {
+                        if isCollapsed(exercise.id) {
+                            Label("\(exercise.sets.count)/\(exercise.sets.count) · Выполнено\(exercise.supersetID == nil ? "" : " · Суперсет")", systemImage: "checkmark.circle.fill")
+                                .font(.caption).foregroundStyle(AppTheme.green)
+                                .onTapGesture { toggleExpansion(exercise.id) }
+                        } else { content(exercise) }
+                    }
                 }
                 .appCard()
                 .opacity(drag.activeID == exercise.id ? 0.18 : 1)
@@ -376,6 +430,11 @@ struct ReorderableExerciseList<Header: View, Content: View>: View {
             frames = updated
             drag.didLayout(frames: updated)
         }
+        .onChange(of: exercises, initial: true) { _, _ in updateCompletion() }
+        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { _ in editingField = true }
+        .onReceive(NotificationCenter.default.publisher(for: UITextView.textDidBeginEditingNotification)) { _ in editingField = true }
+        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidEndEditingNotification)) { _ in finishEditing() }
+        .onReceive(NotificationCenter.default.publisher(for: UITextView.textDidEndEditingNotification)) { _ in finishEditing() }
         .onChange(of: exercises.map(\.id)) { _, ids in
             if let activeID = drag.activeID, !ids.contains(activeID) { finishDrag() }
         }
@@ -395,6 +454,32 @@ struct ReorderableExerciseList<Header: View, Content: View>: View {
     }
 
     private func finishDrag() { drag.finish(frame: drag.activeID.flatMap { frames[$0] }) }
+
+    private func isCollapsed(_ id: UUID) -> Bool {
+        autoCollapseCompleted && completedIDs.contains(id) && !expandedCompleted.wrappedValue.contains(id)
+    }
+
+    private func toggleExpansion(_ id: UUID) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if expandedCompleted.wrappedValue.contains(id) { expandedCompleted.wrappedValue.remove(id) }
+            else { expandedCompleted.wrappedValue.insert(id) }
+        }
+    }
+
+    private func finishEditing() {
+        // Allow a focus change to another field to arrive before collapsing its card.
+        editingField = false
+        DispatchQueue.main.async { updateCompletion() }
+    }
+
+    private func updateCompletion() {
+        guard autoCollapseCompleted else { return }
+        let eligible = WorkoutFlow.completedExerciseIDs(in: exercises)
+        expandedCompleted.wrappedValue.formIntersection(eligible)
+        withAnimation(.easeInOut(duration: 0.2)) {
+            completedIDs = editingField ? completedIDs.intersection(eligible) : eligible
+        }
+    }
 
 }
 

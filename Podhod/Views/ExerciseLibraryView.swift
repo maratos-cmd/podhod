@@ -10,11 +10,12 @@ struct ExerciseLibraryView: View {
 struct ExercisePickerView: View {
     @Environment(\.dismiss) private var dismiss
     var title: String = "Добавить упражнение"
+    var replacing: ExerciseDefinition? = nil
     let onSelect: (ExerciseDefinition) -> Void
 
     var body: some View {
         NavigationStack {
-            ExerciseBrowserContent { exercise in
+            ExerciseBrowserContent(replacing: replacing) { exercise in
                 onSelect(exercise)
                 dismiss()
             }
@@ -29,6 +30,7 @@ struct ExercisePickerView: View {
 
 private struct ExerciseBrowserContent: View {
     @EnvironmentObject private var store: TrainingStore
+    var replacing: ExerciseDefinition? = nil
     let onSelect: ((ExerciseDefinition) -> Void)?
     @State private var search = ""
     @State private var selectedMuscle: MuscleGroup?
@@ -38,12 +40,19 @@ private struct ExerciseBrowserContent: View {
 
     private var filtered: [ExerciseDefinition] {
         store.exercises.filter { exercise in
-            (selectedMuscle == nil || exercise.primaryMuscle == selectedMuscle) &&
+            exercise.id != replacing?.id && (selectedMuscle == nil || exercise.primaryMuscle == selectedMuscle) &&
             (!customOnly || exercise.isCustom) &&
             (search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
              exercise.name.localizedCaseInsensitiveContains(search) ||
              exercise.primaryMuscle.title.localizedCaseInsensitiveContains(search))
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    private var recommended: [ExerciseDefinition] {
+        guard let replacing else { return [] }
+        let visible = Set(filtered.map(\.id))
+        return ExerciseReplacement.suggestions(for: replacing, library: store.exercises, history: store.workouts)
+            .filter { visible.contains($0.id) }
     }
 
     var body: some View {
@@ -68,6 +77,15 @@ private struct ExerciseBrowserContent: View {
                 .foregroundStyle(AppTheme.accent)
                 .accessibilityIdentifier("createCustomExercise")
 
+                if !recommended.isEmpty {
+                    SectionHeading("Рекомендуемые замены", subtitle: "Та же группа мышц; сначала похожая нагрузка")
+                    ForEach(recommended) { exercise in
+                        Button { onSelect?(exercise) } label: { exerciseRow(exercise) }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("recommendedExercise_\(exercise.name)")
+                    }
+                    SectionHeading("Все упражнения")
+                }
                 if filtered.isEmpty {
                     EmptyStateView(symbol: "magnifyingglass", title: "Ничего не найдено", message: "Измени поиск или создай своё упражнение.")
                         .padding(.top, 32)
@@ -98,7 +116,7 @@ private struct ExerciseBrowserContent: View {
                 if let onSelect { onSelect(exercise) }
             }
         }
-        .sheet(item: $inspected) { ExerciseInfoView(exercise: $0) }
+        .sheet(item: $inspected) { ExerciseHistoryView(exercise: $0) }
     }
 
     private var filters: some View {
@@ -150,60 +168,13 @@ private struct ExerciseBrowserContent: View {
     }
 }
 
-private struct ExerciseInfoView: View {
-    @EnvironmentObject private var store: TrainingStore
-    @Environment(\.dismiss) private var dismiss
-    let exercise: ExerciseDefinition
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    HStack(spacing: 16) {
-                        ExerciseAvatar(exercise: exercise, size: 64)
-                        Text(exercise.name).font(.title2.bold())
-                    }
-                    VStack(alignment: .leading, spacing: 16) {
-                        LabeledContent("Основная группа", value: exercise.primaryMuscle.title)
-                        LabeledContent("Нагрузка", value: exercise.loadType.title)
-                        if !exercise.secondaryMuscles.isEmpty {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Вспомогательные мышцы").foregroundStyle(.secondary)
-                                Text(exercise.secondaryMuscles.map(\.title).joined(separator: ", "))
-                            }
-                        }
-                    }.font(.subheadline).appCard()
-                    if let previous = store.previousExercise(for: exercise.id) {
-                        SectionHeading("Последний результат", subtitle: previous.date.formatted(.dateTime.locale(Locale(identifier: "ru_RU")).day().month(.abbreviated).year()))
-                        VStack(spacing: 12) {
-                            ForEach(Array(previous.exercise.sets.filter(\.isCompleted).enumerated()), id: \.element.id) { index, set in
-                                HStack {
-                                    Text("Подход \(index + 1)").foregroundStyle(.secondary)
-                                    if set.isWarmup { Text("Разминка").font(.caption).foregroundStyle(.orange) }
-                                    Spacer()
-                                    Text(Formatters.setSummary(set, loadType: exercise.loadType)).fontWeight(.semibold)
-                                }
-                            }
-                        }.font(.subheadline).appCard()
-                    } else {
-                        EmptyStateView(symbol: "chart.xyaxis.line", title: "Прогресс начинается с подхода", message: "После первой тренировки здесь появятся твои результаты.")
-                    }
-                }.padding(20)
-            }
-            .background(AppTheme.background)
-            .navigationTitle("Упражнение")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
-        }
-    }
-}
-
 struct CustomExerciseEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var primaryMuscle = MuscleGroup.chest
     @State private var secondaryMuscles: Set<MuscleGroup> = []
     @State private var loadType = LoadType.external
+    @State private var tracksSides = false
     let onSave: (ExerciseDefinition) -> Void
     private let loadTypes: [LoadType] = [.external, .bodyweight, .weightedBodyweight, .assisted]
 
@@ -229,6 +200,11 @@ struct CustomExerciseEditor: View {
                     Text(loadExplanation)
                 }
                 Section {
+                    Toggle("Одностороннее упражнение", isOn: $tracksSides)
+                } footer: {
+                    Text("Вес и повторы для левой и правой стороны отдельно. Одна галочка завершает обе стороны; один подход в статистике. Дроп-сеты с раздельными сторонами пока не поддерживаются.")
+                }
+                Section {
                     ForEach(MuscleGroup.allCases.filter { $0 != primaryMuscle }) { muscle in
                         Toggle(muscle.title, isOn: Binding(
                             get: { secondaryMuscles.contains(muscle) },
@@ -248,7 +224,7 @@ struct CustomExerciseEditor: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Создать") {
-                        let definition = ExerciseDefinition(name: name.trimmingCharacters(in: .whitespacesAndNewlines), primaryMuscle: primaryMuscle, secondaryMuscles: MuscleGroup.allCases.filter { secondaryMuscles.contains($0) && $0 != primaryMuscle }, loadType: loadType, isCustom: true)
+                        let definition = ExerciseDefinition(name: name.trimmingCharacters(in: .whitespacesAndNewlines), primaryMuscle: primaryMuscle, secondaryMuscles: MuscleGroup.allCases.filter { secondaryMuscles.contains($0) && $0 != primaryMuscle }, loadType: loadType, isCustom: true, tracksSides: tracksSides)
                         onSave(definition)
                         dismiss()
                     }

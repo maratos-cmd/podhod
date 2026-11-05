@@ -1,73 +1,82 @@
-# Подход — shared implementation contract
+# Архитектура «Подхода»
 
-Native SwiftUI iPhone app, iOS 17+, Swift 5 language mode. Russian UI; dark graphite cards, blue accent. Offline first with atomic JSON persistence. No fake completed workout history.
+SwiftUI, iOS 17+, Swift 5, локальный JSON. Сторонних зависимостей, сервера и обязательных аккаунтов нет. Интерфейс на русском; оформление задаёт `AppTheme`. Основной target `Podhod`, расширение `PodhodActivity`, тесты `PodhodTests` и `PodhodUITests`.
 
-## Ownership
-- Root: Core models, TrainingStore, theme, app entry, project, tests, integration.
-- workout_ui agent: Views/TrainingViews.swift, Views/ActiveWorkoutView.swift, Views/ExerciseLibraryView.swift (and any uniquely named UI files needed).
-- insights_ui agent: Views/HistoryViews.swift, Views/ProfileViews.swift (and uniquely named related UI files).
-- health_service agent: Services/HealthService.swift and Services/RestNotificationService.swift.
+## Данные и совместимость
 
-## Models (all value types, Codable, Identifiable; all IDs UUID)
-- MuscleGroup: String enum, CaseIterable, Identifiable. Cases chest, back, shoulders, biceps, triceps, quadriceps, hamstrings, glutes, calves, core. `title: String`, `symbol: String`.
-- LoadType: String enum. Cases external, bodyweight, weightedBodyweight, assisted. `title`, `shortTitle`, `usesWeight: Bool`.
-- Effort: String enum. Cases easy, medium, hard. `title: String`.
-- ExerciseDefinition: id, name: String, primaryMuscle: MuscleGroup, secondaryMuscles: [MuscleGroup], loadType: LoadType, isCustom: Bool. Initializer defaults id=UUID(), secondaryMuscles=[], isCustom=false.
-- SetRecord: id, weight: Double, reps: Int, effort: Effort?, isCompleted: Bool, isWarmup: Bool, completedAt: Date?. Initializer defaults id=UUID(), weight=0, reps=8, effort=nil, isCompleted=false, isWarmup=false, completedAt=nil.
-- WorkoutExercise: id, definition: ExerciseDefinition, sets: [SetRecord], restSeconds: Int, notes: String. Default sets=[SetRecord(),SetRecord(),SetRecord()], restSeconds=120, notes="".
-- Routine: id, name: String, notes: String, exercises: [WorkoutExercise], createdAt: Date. Defaults name="Новая программа", notes="", exercises=[], createdAt=Date().
-- Workout: id, name: String, startedAt: Date, endedAt: Date?, exercises: [WorkoutExercise], defaultRestSeconds: Int, notes: String, averageHeartRate: Double?, healthWorkoutID: UUID?. Defaults name="Тренировка", startedAt=Date(), endedAt=nil, exercises=[], defaultRestSeconds=120, notes="", averageHeartRate=nil, healthWorkoutID=nil. Computed `duration: TimeInterval`, `completedSets: Int`, `volume: Double`.
-- RestTimer: id, exerciseName: String, endsAt: Date, duration: Int. `remaining(at: Date) -> Int`.
-- BodyMeasurement: id, date: Date, weight, neck, chest, waist, hips, arm, thigh, calf: Double? (all optional default nil).
-- AppData: schemaVersion=1, exercises, routines, workouts, activeWorkout: Workout?, restTimer: RestTimer?, measurements, profileName="Марат".
+`AppData` — единственный сохраняемый журнал. Схема 2; `Persistence.decode` явно переводит схему 1 в 2, добавляя только безопасные отсутствующие необязательные значения. Неизвестные версии отклоняются. Даты по-прежнему ISO 8601 с точностью до секунды. Запись атомарная, предыдущий валидный документ хранится в `.previous`. Импорт сначала валидирует и записывает кандидат на диск, затем заменяет состояние в памяти. UI требует подтверждение замены.
 
-## Store API (MainActor ObservableObject; @EnvironmentObject var store: TrainingStore)
-- `@Published private(set) var data: AppData`
-- Read conveniences: exercises, routines, workouts, activeWorkout, measurements, restTimer.
-- `@Published var errorMessage: String?`
-- `startWorkout(routine: Routine? = nil)` no-op if already active.
-- `updateActive(_ change: (inout Workout) -> Void)` saves immediately.
-- `addExerciseToActive(_ definition: ExerciseDefinition)`.
-- `toggleSet(exerciseID: UUID, setID: UUID)` validates >0 reps and appropriate weight then completes; triggers rest notification. Invalid sets set errorMessage. Uncheck cancels rest only if timer belongs to that set internally.
-- `finishWorkout() -> Workout?` saves completed sets only, refuses zero completed sets, clears active and rest; no automatic change of routine.
-- `discardWorkout()`, `skipRest()`, `adjustRest(by seconds: Int)`.
-- `saveRoutine(_ routine: Routine)`, `deleteRoutine(_ id: UUID)`.
-- `saveExercise(_ exercise: ExerciseDefinition)`.
-- `saveWorkout(_ workout: Workout)`, `deleteWorkout(_ id: UUID)`.
-- `addMeasurement(_ measurement: BodyMeasurement)`, `deleteMeasurement(_ id: UUID)`.
-- `setProfileName(_ name: String)`.
-- `previousExercise(for exerciseID: UUID, before: Date = Date()) -> (date: Date, exercise: WorkoutExercise)?` completed history only; across all routines.
-- `personalRecords(in workout: Workout) -> Int` number of exercises with new best, first occurrence excluded; compares only older sessions.
-- `exportBackup() throws -> URL`; `importBackup(from url: URL) throws` validates schema then replaces data (UI confirms before this call).
-- `attachHeartRate(workoutID: UUID, average: Double, healthWorkoutID: UUID?)`.
+- `ExerciseDefinition.id` — постоянная идентичность упражнения. Сохранённые `WorkoutExercise.definition` — снимки; редактирование библиотеки не переписывает их.
+- `SetRecord` хранит обычный результат, необязательные `dropSteps` либо `sides`. Совмещение сторон и дроп-ступеней отклоняется валидацией.
+- `SideResults` содержит левый и правый `SidePerformance`. Для завершения обе стороны должны иметь положительные повторы и корректный вес; при внешнем весе требуется значение больше нуля. Интенсивность и разминка общие на подход.
+- `WorkoutExercise.discomfort` относится к одному выполнению, содержит области и заметку. При повторении очищается; даже без выполненных подходов карточка с отметкой сохраняется при завершении непустой тренировки.
+- `Workout.originRoutineID` необязателен. Старым тренировкам идентичность программы не приписывается по имени.
+- `Routine.defaultRestSeconds`, `AppData.weeklySchedule`, `reminderPreferences`, `restSignalPreferences` необязательны для старых копий.
 
-## Shared appearance (root implements Views/Theme.swift)
-- `AppTheme.background`, `.card`, `.accent`, `.secondary`, `.green`: Color.
-- `.appCard()` view modifier (padding 18, rounded card).
-- `SectionHeading(_ title: String, subtitle: String? = nil)`.
-- `EmptyStateView(symbol: String, title: String, message: String)`.
-- `MetricTile(title: String, value: String, symbol: String, tint: Color = AppTheme.accent)`.
-- `PrimaryButtonStyle()`.
-- `Formatters.weight(_ value: Double) -> String`, `.duration(_ seconds: TimeInterval) -> String`, `.clock(_ seconds: TimeInterval) -> String`, `.setSummary(_ set: SetRecord, loadType: LoadType) -> String` (Core).
+Ручной экспорт содержит весь `AppData`. Состояние системных уведомлений и ActivityKit восстанавливается из журнала, не является отдельной базой. Настройка ручного раскрытия завершённых карточек живёт только на время текущего процесса.
 
-## Entry points implemented by agents
-- TrainingHomeView(onOpenWorkout: @escaping () -> Void)
-- ActiveWorkoutView() with @Environment dismiss for minimize/finish
-- ExerciseLibraryView() standalone browsing; ExercisePickerView(onSelect: @escaping (ExerciseDefinition) -> Void) presented as sheet, dismisses after select
-- HistoryView()
-- ProfileView()
+Файлы журнала, предыдущей копии и их каталог используют `completeUntilFirstUserAuthentication`: данные зашифрованы, но доступны для фоновой записи после первого разблокирования. Старые атрибуты мигрируются при загрузке без изменения содержимого. Атомарная запись явно применяет этот класс к обоим файлам. Прежний `completeUnlessOpen` запрещал повторное открытие закрытого файла при блокировке и мешал сохранению receipts.
 
-## Services (health_service agent)
-- `@MainActor final class HealthService: ObservableObject`, static shared, @Published statusMessage: String?, @Published isLoading: Bool.
-- `func importHeartRate(for workout: Workout) async -> (average: Double, healthWorkoutID: UUID?)?` requests read permission as user initiated, matches completed Apple Health workout by overlap, no health writes, reports absent/denied data honestly.
-- `@MainActor final class RestNotificationService`, static shared.
-- `func requestAuthorization() async -> Bool`, `func schedule(rest: RestTimer)`, `func cancel()`.
-- Rest scheduling user interaction from completed set; schedule locally with UNTimeIntervalNotificationTrigger, no remote server. Root will call requestAuthorization at first workout start.
+`TrainingStore` различает отказ чтения и повреждение JSON. При отказе чтения журнал недоступен для изменений/экспорта; начальные данные не могут затереть основной файл, предыдущая копия не подставляется. `resumePersistence` повторяет загрузку после разблокировки/возврата в приложение. Для уже загруженного журнала временный отказ фоновой записи сохраняет последнюю версию в памяти с `isSavePending` и повторяется после разблокировки. Ошибки свободного места и другие постоянные ошибки не скрываются. Ручное восстановление остаётся явным действием пользователя.
 
-## UX principles
-- Preserve history by snapshotting exercises and routine.
-- Past set result is actual last completed workout containing exercise, not target. More sets today => dash for missing old row.
-- Effort optional, no forced modal after completion.
-- Completed working sets for muscle statistics. Separate primary/secondary participation. Tonnage external weight only (assisted/bodyweight excluded).
-- Timestamp based timers; atomic save on every change; backup/import with confirmation.
-- No social screens. Heart rate only when read successfully from Apple Health. Watch real-time app is explicitly next stage, not a fake toggle.
+## Расчёты
+
+`TrainingMath` остаётся источником тоннажа, повторов, мышечных подходов и PR. В тоннаж входят выполненные подходы и разминка: внешняя/дополнительная нагрузка × повторы, все дроп-ступени. При сторонах объём складывается из двух результатов. Собственный вес тела и помощь тренажёра исключены. Обычный подход, дроп-сет и пара сторон дают по одному рабочему подходу для мышечной статистики. Основные и дополнительные мышцы учитываются отдельно.
+
+PR и прогресс исключают разминку. Учитываются постоянный ID, исторический тип нагрузки и канал: обычный / левая / правая. Новый канал без предыдущего результата не даёт PR. `Formatters.setSummary` читает результат по историческому типу нагрузки, не по текущим настройкам библиотеки.
+
+`ExerciseAnalytics` объединяет все вхождения упражнения в завершённой тренировке, включая разные программы. Экран показывает последние 10 сессий, заметки, дискомфорт, переходы к исходным записям. Серии графика обычных подходов и сторон разделены; сводные лучшие показатели сторон также разделены.
+
+`WorkoutComparison` сначала ищет ту же `originRoutineID`. Для старых записей допускает структурное совпадение Jaccard ≥ 0,75 с минимум двумя общими упражнениями (либо точное совпадение двух одноупражненческих сессий). Два разных известных ID программ не связываются через fallback. Сравниваются только рабочие выполненные подходы по порядку, одинаковый тип, стороны и число ступеней. Несопоставимое количество подходов, смешанная динамика или обмен веса на повторы получают нейтральное «изменение».
+
+## Управление тренировкой
+
+`TrainingStore` — `@MainActor ObservableObject`, владелец `@Published private(set) data`. Изменения активной тренировки проходят валидацию; сохраняется максимум одна активная сессия. Завершение требует хотя бы одного выполненного подхода. Замена сохраняет положение карточки и связи суперсета, очищает чужие результаты; подходящие прошлые цели копируются только при совместимом типе нагрузки и учёте сторон.
+
+`WorkoutFlow` централизует:
+
+- Следующее действие после подхода: следующий незавершённый, участник текущего круга суперсета, следующий круг, следующее упражнение, возврат к пропущенному или завершение.
+- Копирование структуры с новыми ID тренировок/карточек/подходов/дроп-ступеней/групп и очисткой фактического выполнения.
+- Полноту карточек и групп для сворачивания.
+
+При повторении история «Было» берётся глобально из последних завершённых записей, независимо от исходной повторяемой сессии. Повтор и сохранение программы сначала коммитят документ на диск.
+
+`ReorderableExerciseList` сохраняет карточки во время перетаскивания, сворачивает детали на время жеста и откладывает автоматическое сворачивание при вводе. `SwipeableSetList` встраивает нативные действия `List` в общий скролл; пустой список удаляется из дерева. Числовые поля UIKit выделяют значение при фокусе и используют кнопку скрытия клавиатуры; при её появлении внешний скролл открывает поле.
+
+## Планирование и уведомления
+
+`TrainingSchedule` определяет день через переданный календарь (по умолчанию `autoupdatingCurrent`). Один план/отдых на день, ссылка на ID программы. Удаление программы удаляет назначения. Главная обновляет день раз в минуту и при возобновлении TimelineView; активная тренировка имеет приоритет.
+
+`InactivityReminders` — чистое решение отменить / оставить / поставить уведомление. По умолчанию выключено; интервалы 3/5/7 календарных дней. Якорь — максимальный `endedAt`, при пустой истории — момент включения. `lastScheduledCycle` предотвращает повтор после срабатывания или удаления уведомления пользователем. До наступления срока уведомление можно восстановить из копии. Изменение настроек/истории/импорт/foreground вызывают пересогласование. Начало тренировки отсчёт не меняет.
+
+`InactivityReminderService` и `RestAlertService` независимо сериализуют операции с generation-защитой от устаревших добавлений. Отдых использует только UserNotifications: один запрос `podhod.rest.<UUID>` с коротким звуком и `repeats = false`. Полноэкранный AlarmKit убран 4 ноября 2026; старые `loudAlertsEnabled` и receipts декодируются для совместимости, но не включают его снова.
+
+`AlarmKitRestBackend` оставлен только для миграционной очистки старых сигналов: его `schedule` всегда отклоняет запрос, `requestAccess` не показывает запрос разрешения. При согласовании удаляются все прежние будильники приложения, включая уже звонящий и проверочный; только после очистки допускается уведомление. Ошибка очистки видна в настройках и блокирует дублирование каналов. Истёкший отдых не назначается заново.
+
+Разрешение уведомлений запрашивается при пользовательском действии, не при запуске. `.timeSensitive` устанавливается только при фактическом разрешённом системном статусе; существующие entitlements не меняются. UserNotifications не гарантирует звук при Silent/Focus. В foreground доступны баннер, выбранный короткий звук и тактильный отклик. Фоновых таймеров или аудиоциклов нет.
+
+Единственный срок — `RestTimer.endsAt`; `id` стабилен, `sourceSetID`/`sourceSetIDs` связывают отдых с подходом/кругом суперсета. Снятие галочки отменяет невалидный отдых. `WorkoutFlow.nextAction` определяет общий текст для уведомления, UI и Live Activity. `alertReceipt` хранит подпись параметров и отметку закрытия. Старый `.alarm` receipt заменяется `.notification` при сохранении ещё действующего отдыха; настройки и тренировка остаются прежними.
+
+Выбор звука и preview сохранены: `.default` и шесть собственных коротких WAV. Старый `silent` декодируется как двойной сигнал; UI не предлагает беззвучный вариант. Любой путь постановки уведомления явно назначает `content.sound`. Недоступный ресурс заменяется системным. Проверка назначает настоящее одноразовое уведомление через 10 секунд, с отдельным ID и отменой; тренировка имеет приоритет. `RestSoundPlayer` останавливается при уходе со страницы или в фон.
+
+## Live Activity
+
+`Shared/WorkoutActivityAttributes.swift` включён в приложение и расширение. Содержит только компактные данные для представления, без доступа расширения к JSON. App Groups и push не нужны. `WorkoutActivityState` выводит состояние из текущей тренировки, отдыха и `WorkoutFlow`.
+
+`WorkoutActivityService` последовательно удаляет старые/повторные активности, обновляет одну подходящую и создаёт отсутствующую только в foreground при разрешении iOS. Завершение/отмена передаёт `nil` и немедленно закрывает активности. Повторные foreground-вызовы восстанавливают существующую. Внутри процесса ручное закрытие карточки учитывается; после перезапуска восстановление активной тренировки может снова создать карточку. Тренировки старше 8 часов не запускают новую активность автоматически.
+
+`PodhodActivity` показывает экран блокировки и Dynamic Island. Таймер — системный SwiftUI `Text(timerInterval:)` по абсолютной дате; `staleDate` и `context.isStale` обозначают истечение отдыха. Это не гарантия произвольного выполнения в фоне. URL `podhod://workout` открывает существующую активную тренировку и не создаёт новую.
+
+Расширение встроено в `Podhod.xcodeproj`. Существующие Team, Bundle ID и entitlements приложения не изменены. Новый target использует ту же Team и отдельный ID `app.personal.podhod.activity`; выпуск профиля и установка на физические телефоны отдельно не выполнялись. Архивный генератор проекта защищён от перезаписи проекта с расширением.
+
+## Apple Health и iCloud
+
+`HealthService` не менялся: после отдельного действия читает средний пульс из совпадающей по времени завершённой силовой тренировки, без записи в HealthKit. Приложения watchOS и live-пульса нет.
+
+Для бесплатной Personal Team автоматический iCloud-контейнер недоступен. Настройки объясняют ручной экспорт через системный share sheet → «Файлы» → iCloud Drive. Локальная атомарная база и ручное восстановление полностью сохранены.
+
+## Проверки
+
+Логика и данные проверяются XCTest; UI работает в отдельном временном журнале с `--uitesting`, не открывая пользовательские данные. Автоматическая интеграция тренировок в этом режиме выключена. Отдельные тесты системного API и кнопки проверки UserNotifications явно разрешены только в симуляторе; создают и отменяют настоящее уведомление. Аппаратная проверка класса защиты файлов пропускается в симуляторе явно. Проверка жизненного цикла ActivityKit отдельно запускается в разрешённой foreground-среде и явно пропускается, если система её не предоставляет. Результаты и пределы проверки указаны в `IMPLEMENTATION_STATUS_RU.md` и `VALIDATION.md`.
+
+`RestNotificationService.delivery` отдельно отражает разрешения звука, баннеров, экрана блокировки и отложенной доставки. `.provisional` не считается полноценным разрешением: пользовательское действие запрашивает `.alert` и `.sound`. В foreground делегат возвращает `.banner`, `.list`, `.sound`; в фоне и при блокировке доставкой занимается iOS. Экран не определяется через приватные API. Подробнее: `docs/ЗВУК_УВЕДОМЛЕНИЙ.md`.

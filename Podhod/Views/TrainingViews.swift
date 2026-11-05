@@ -9,6 +9,11 @@ struct TrainingHomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
+                if store.activeWorkout == nil {
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        todaySuggestion(on: context.date)
+                    }
+                }
                 startCard
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
@@ -58,6 +63,12 @@ struct TrainingHomeView: View {
         }
         .background(AppTheme.background)
         .navigationTitle("Тренировка")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { WeeklyScheduleView() } label: { Image(systemName: "calendar") }
+                    .accessibilityLabel("Расписание тренировок")
+            }
+        }
         .sheet(item: $editingRoutine) { RoutineEditorView(routine: $0) }
         .confirmationDialog("Удалить программу?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
             Button("Удалить программу", role: .destructive) {
@@ -66,6 +77,22 @@ struct TrainingHomeView: View {
             }
             Button("Отмена", role: .cancel) { pendingDelete = nil }
         } message: { Text("Завершённые тренировки сохранятся в истории.") }
+    }
+
+    @ViewBuilder
+    private func todaySuggestion(on date: Date) -> some View {
+        if let routine = TrainingSchedule.routine(in: store.data, on: date) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Сегодня по плану", systemImage: "calendar").font(.caption).foregroundStyle(AppTheme.accent)
+                Text(routine.name).font(.headline)
+                Button("Начать тренировку") {
+                    store.startWorkout(routine: routine)
+                    onOpenWorkout()
+                }.buttonStyle(PrimaryButtonStyle()).accessibilityIdentifier("startScheduledWorkout")
+            }.appCard()
+        } else if TrainingSchedule.assignment(in: store.data, on: date)?.isRestDay == true {
+            Label("Сегодня по плану — отдых", systemImage: "moon.zzz").font(.subheadline).foregroundStyle(.secondary)
+        }
     }
 
     private var startCard: some View {
@@ -202,7 +229,7 @@ struct RoutineDetailView: View {
                                             Text("Дроп-сет").font(.caption.weight(.medium)).foregroundStyle(AppTheme.accent)
                                         }
                                         Spacer()
-                                        Text(routineSetTarget(set.weight, reps: set.reps, loadType: exercise.definition.loadType)).fontWeight(.semibold)
+                                        Text(set.sides == nil ? routineSetTarget(set.weight, reps: set.reps, loadType: exercise.definition.loadType) : Formatters.setSummary(set, loadType: exercise.definition.loadType)).fontWeight(.semibold)
                                     }
                                     if let steps = set.dropSteps {
                                         ForEach(Array(steps.enumerated()), id: \.element.id) { stepIndex, step in
@@ -248,6 +275,7 @@ struct RoutineEditorView: View {
     @State private var routine: Routine
     @State private var showExercisePicker = false
     @State private var replacingExercise: WorkoutExercise?
+    @State private var historyExercise: ExerciseDefinition?
     @State private var pairingExercise: WorkoutExercise?
     @State private var showDiscard = false
     private let initial: Routine
@@ -262,7 +290,8 @@ struct RoutineEditorView: View {
         !routine.exercises.isEmpty &&
         routine.exercises.allSatisfy {
             !$0.sets.isEmpty && $0.sets.allSatisfy { set in
-                set.reps > 0 && (set.dropSteps ?? []).allSatisfy { $0.reps > 0 }
+                if let sides = set.sides { return sides.left.reps > 0 && sides.right.reps > 0 }
+                return set.reps > 0 && (set.dropSteps ?? []).allSatisfy { $0.reps > 0 }
             }
         }
     }
@@ -322,15 +351,16 @@ struct RoutineEditorView: View {
             }
             .trainingKeyboardDismissButton()
             .sheet(isPresented: $showExercisePicker) {
-                ExercisePickerView { definition in routine.exercises.append(WorkoutExercise(definition: definition)) }
+                ExercisePickerView { definition in routine.exercises.append(WorkoutExercise.new(definition)) }
             }
             .sheet(item: $replacingExercise) { original in
-                ExercisePickerView(title: "Заменить упражнение") { definition in
+                ExercisePickerView(title: "Заменить упражнение", replacing: original.definition) { definition in
                     guard let index = routine.exercises.firstIndex(where: { $0.id == original.id }) else { return }
                     routine.exercises[index] = routine.exercises[index].replacingDefinition(with: definition)
                     SupersetEditing.normalize(&routine.exercises)
                 }
             }
+            .sheet(item: $historyExercise) { ExerciseHistoryView(exercise: $0) }
             .sheet(item: $pairingExercise) { exercise in
                 RoutineSupersetPicker(exercise: exercise, candidates: routine.exercises.filter { $0.id != exercise.id }) { other in
                     SupersetEditing.pair(exercise.id, with: other.id, in: &routine.exercises)
@@ -356,6 +386,7 @@ struct RoutineEditorView: View {
             }
             if !compact {
                 Menu {
+                    Button("История упражнения", systemImage: "chart.xyaxis.line") { historyExercise = exercise.definition }
                     Button("Заменить упражнение", systemImage: "arrow.triangle.2.circlepath") { replacingExercise = exercise }
                     if exercise.supersetID != nil {
                         Button("Разъединить суперсет", systemImage: "link.badge.plus") {
@@ -414,11 +445,13 @@ private struct RoutineExerciseEditor: View {
             }
             TextField("Заметка к упражнению", text: Binding(get: { exercise.notes }, set: { notes in mutate { $0.notes = notes } }), axis: .vertical)
                 .font(.subheadline).lineLimit(1...4)
-            ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { index, set in
+            SwipeableSetList(sets: exercise.sets, onDelete: { set in
+                mutate { $0.sets.removeAll { $0.id == set.id } }
+            }) { index, set in
                 setEditor(set, index: index)
             }
             Button {
-                var next = (exercise.sets.last ?? SetRecord()).freshTarget()
+                var next = (exercise.sets.last ?? SetRecord()).target(for: exercise.definition)
                 next.isWarmup = false
                 mutate { $0.sets.append(next) }
             } label: {
@@ -441,7 +474,7 @@ private struct RoutineExerciseEditor: View {
                         Button("Убрать дроп-ступени", systemImage: "minus.circle") {
                             changeSet(set.id) { $0.dropSteps = nil }
                         }
-                    } else if exercise.definition.loadType.usesWeight {
+                    } else if exercise.definition.loadType.usesWeight && set.sides == nil {
                         Button("Сделать дроп-сетом", systemImage: "arrow.down.right") { appendDropStep(to: set) }
                     }
                     Button("Выше", systemImage: "arrow.up") { moveSet(index, by: -1) }.disabled(index == 0)
@@ -456,6 +489,8 @@ private struct RoutineExerciseEditor: View {
                         .frame(width: 40, height: 44)
                         .background(AppTheme.background, in: RoundedRectangle(cornerRadius: 10))
                 }.accessibilityLabel("Настройки подхода \(index + 1)")
+                if set.sides != nil { Spacer() }
+                else {
                 if exercise.definition.loadType.usesWeight {
                     TrainingNumberField(label: weightLabel, value: set.weight) { weight in
                         changeSet(set.id) { $0.weight = weight }
@@ -464,6 +499,10 @@ private struct RoutineExerciseEditor: View {
                 TrainingNumberField(label: "Повторы", value: Double(set.reps), integer: true) { reps in
                     changeSet(set.id) { $0.reps = Int(reps) }
                 }
+            }
+                }
+            if let sides = set.sides {
+                SideResultsEditor(sides: sides, loadType: exercise.definition.loadType) { value in changeSet(set.id) { $0.sides = value } }
             }
             if set.isDropSet {
                 Label("Дроп-сет · без отдыха между ступенями", systemImage: "arrow.down.right")

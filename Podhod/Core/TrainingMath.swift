@@ -35,27 +35,28 @@ enum TrainingMath {
     static func records(in workout: Workout, history: [Workout]) -> Int {
         var counted = Set<UUID>()
         for exercise in workout.exercises {
-            let completed = exercise.sets.filter { $0.isCompleted && !$0.isWarmup }.flatMap(recordSteps)
-            guard !completed.isEmpty else { continue }
-            let earlier = history.filter { $0.id != workout.id && $0.endedAt != nil && $0.endedAt! <= workout.startedAt && $0.startedAt < workout.startedAt }
-                .flatMap(\.exercises)
-                .filter { $0.definition.id == exercise.definition.id && $0.definition.loadType == exercise.definition.loadType }
-                .flatMap(\.sets).filter { $0.isCompleted && !$0.isWarmup }.flatMap(recordSteps)
-            guard !earlier.isEmpty else { continue }
-            let isRecord: Bool
-            switch exercise.definition.loadType {
-            case .bodyweight:
-                isRecord = (completed.map(\.reps).max() ?? 0) > (earlier.map(\.reps).max() ?? 0)
-            case .assisted:
-                // Less assistance at equal or higher reps is a meaningful improvement.
-                isRecord = completed.contains { current in
-                    earlier.contains { $0.reps <= current.reps && $0.weight > current.weight } &&
-                    !earlier.contains { $0.weight <= current.weight && $0.reps >= current.reps }
-                }
-            case .external, .weightedBodyweight:
-                isRecord = completed.contains { current in
-                    current.weight > (earlier.map(\.weight).max() ?? 0) ||
-                    (earlier.contains { $0.weight == current.weight } && current.reps > (earlier.filter { $0.weight == current.weight }.map(\.reps).max() ?? 0))
+            var isRecord = false
+            for side in ([ExerciseSide?.none] + ExerciseSide.allCases.map(Optional.some)) {
+                let completed = exercise.sets.filter { $0.isCompleted && !$0.isWarmup }.flatMap { recordSteps($0, side: side) }
+                guard !completed.isEmpty else { continue }
+                let earlier = history.filter { $0.id != workout.id && $0.endedAt != nil && $0.endedAt! <= workout.startedAt && $0.startedAt < workout.startedAt }
+                    .flatMap(\.exercises)
+                    .filter { $0.definition.id == exercise.definition.id && $0.definition.loadType == exercise.definition.loadType }
+                    .flatMap(\.sets).filter { $0.isCompleted && !$0.isWarmup }.flatMap { recordSteps($0, side: side) }
+                guard !earlier.isEmpty else { continue }
+                switch exercise.definition.loadType {
+                case .bodyweight:
+                    isRecord = isRecord || (completed.map(\.reps).max() ?? 0) > (earlier.map(\.reps).max() ?? 0)
+                case .assisted:
+                    isRecord = isRecord || completed.contains { current in
+                        earlier.contains { $0.reps <= current.reps && $0.weight > current.weight } &&
+                        !earlier.contains { $0.weight <= current.weight && $0.reps >= current.reps }
+                    }
+                case .external, .weightedBodyweight:
+                    isRecord = isRecord || completed.contains { current in
+                        current.weight > (earlier.map(\.weight).max() ?? 0) ||
+                        (earlier.contains { $0.weight == current.weight } && current.reps > (earlier.filter { $0.weight == current.weight }.map(\.reps).max() ?? 0))
+                    }
                 }
             }
             if isRecord { counted.insert(exercise.definition.id) }
@@ -65,8 +66,13 @@ enum TrainingMath {
 
     // A drop set is one working set, but each uninterrupted weight segment
     // remains a separate performance when comparing weight/repetition records.
-    private static func recordSteps(_ set: SetRecord) -> [DropStep] {
-        [DropStep(id: set.id, weight: set.weight, reps: set.reps)] + (set.dropSteps ?? [])
+    static func recordSteps(_ set: SetRecord, side: ExerciseSide? = nil) -> [DropStep] {
+        if let side {
+            guard let result = set.sides?[side] else { return [] }
+            return [DropStep(id: set.id, weight: result.weight, reps: result.reps)]
+        }
+        guard set.sides == nil else { return [] }
+        return [DropStep(id: set.id, weight: set.weight, reps: set.reps)] + (set.dropSteps ?? [])
     }
 }
 
@@ -95,6 +101,10 @@ enum Formatters {
         return String(format: "%02d:%02d", total / 60, total % 60)
     }
     static func setSummary(_ set: SetRecord, loadType: LoadType) -> String {
+        if let sides = set.sides {
+            return "Л: " + stepSummary(weight: sides.left.weight, reps: sides.left.reps, loadType: loadType) +
+                " · П: " + stepSummary(weight: sides.right.weight, reps: sides.right.reps, loadType: loadType)
+        }
         let first = stepSummary(weight: set.weight, reps: set.reps, loadType: loadType)
         return ([first] + (set.dropSteps ?? []).map { stepSummary(weight: $0.weight, reps: $0.reps, loadType: loadType) }).joined(separator: " → ")
     }

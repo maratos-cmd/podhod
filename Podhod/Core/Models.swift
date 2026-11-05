@@ -69,6 +69,8 @@ struct ExerciseDefinition: Codable, Identifiable, Equatable, Hashable {
     var secondaryMuscles: [MuscleGroup] = []
     var loadType: LoadType
     var isCustom: Bool = false
+    var tracksSides: Bool? = nil
+    var isUnilateral: Bool { tracksSides == true }
 }
 
 struct DropStep: Codable, Identifiable, Equatable {
@@ -86,11 +88,16 @@ struct SetRecord: Codable, Identifiable, Equatable {
     var isWarmup: Bool = false
     var completedAt: Date? = nil
     var dropSteps: [DropStep]? = nil
+    var sides: SideResults? = nil
 
     var isDropSet: Bool { !(dropSteps ?? []).isEmpty }
-    var totalReps: Int { max(0, reps) + (dropSteps ?? []).reduce(0) { $0 + max(0, $1.reps) } }
+    var totalReps: Int {
+        if let sides { return max(0, sides.left.reps) + max(0, sides.right.reps) }
+        return max(0, reps) + (dropSteps ?? []).reduce(0) { $0 + max(0, $1.reps) }
+    }
     var externalVolume: Double {
-        max(0, weight) * Double(max(0, reps)) + (dropSteps ?? []).reduce(0) {
+        if let sides { return sides.left.volume + sides.right.volume }
+        return max(0, weight) * Double(max(0, reps)) + (dropSteps ?? []).reduce(0) {
             $0 + max(0, $1.weight) * Double(max(0, $1.reps))
         }
     }
@@ -104,6 +111,20 @@ struct SetRecord: Codable, Identifiable, Equatable {
         copy.dropSteps = dropSteps?.map { DropStep(weight: $0.weight, reps: $0.reps) }
         return copy
     }
+
+    func target(for definition: ExerciseDefinition) -> SetRecord {
+        var copy = freshTarget()
+        if definition.isUnilateral {
+            copy.sides = sides ?? SideResults(left: SidePerformance(reps: reps), right: SidePerformance(reps: reps))
+            copy.dropSteps = nil
+            copy.weight = 0
+        } else if sides != nil {
+            copy.sides = nil
+            copy.weight = 0
+            copy.reps = 8
+        }
+        return copy
+    }
 }
 
 struct WorkoutExercise: Codable, Identifiable, Equatable {
@@ -113,12 +134,20 @@ struct WorkoutExercise: Codable, Identifiable, Equatable {
     var restSeconds: Int = 120
     var notes: String = ""
     var supersetID: UUID? = nil
+    var discomfort: DiscomfortRecord? = nil
+
+    static func new(_ definition: ExerciseDefinition, restSeconds: Int = 120) -> WorkoutExercise {
+        var exercise = WorkoutExercise(definition: definition, restSeconds: restSeconds)
+        exercise.sets = exercise.sets.map { $0.target(for: definition) }
+        return exercise
+    }
 
     func replacingDefinition(with definition: ExerciseDefinition) -> WorkoutExercise {
         var copy = self
         copy.definition = definition
         copy.notes = ""
-        copy.sets = sets.map { SetRecord(reps: $0.reps, isWarmup: $0.isWarmup) }
+        copy.discomfort = nil
+        copy.sets = sets.map { SetRecord(reps: $0.reps, isWarmup: $0.isWarmup).target(for: definition) }
         return copy
     }
 }
@@ -161,6 +190,7 @@ struct Routine: Codable, Identifiable, Equatable {
     var notes: String = ""
     var exercises: [WorkoutExercise] = []
     var createdAt: Date = Date()
+    var defaultRestSeconds: Int? = nil
 }
 
 struct Workout: Codable, Identifiable, Equatable {
@@ -173,6 +203,8 @@ struct Workout: Codable, Identifiable, Equatable {
     var notes: String = ""
     var averageHeartRate: Double? = nil
     var healthWorkoutID: UUID? = nil
+    // Optional for old backups; session names are never used as program identity.
+    var originRoutineID: UUID? = nil
 
     var duration: TimeInterval { max(0, (endedAt ?? Date()).timeIntervalSince(startedAt)) }
     var completedSets: Int { exercises.reduce(0) { $0 + $1.sets.filter(\.isCompleted).count } }
@@ -186,6 +218,7 @@ struct RestTimer: Codable, Identifiable, Equatable {
     var duration: Int
     var sourceSetID: UUID? = nil
     var sourceSetIDs: [UUID]? = nil
+    var alertReceipt: RestAlertReceipt? = nil
     func remaining(at date: Date) -> Int { max(0, Int(ceil(endsAt.timeIntervalSince(date)))) }
 }
 
@@ -203,7 +236,7 @@ struct BodyMeasurement: Codable, Identifiable, Equatable {
 }
 
 struct AppData: Codable, Equatable {
-    var schemaVersion: Int = 1
+    var schemaVersion: Int = 2
     var exercises: [ExerciseDefinition] = []
     var routines: [Routine] = []
     var workouts: [Workout] = []
@@ -211,4 +244,7 @@ struct AppData: Codable, Equatable {
     var restTimer: RestTimer? = nil
     var measurements: [BodyMeasurement] = []
     var profileName: String = "Марат"
+    var weeklySchedule: [WeeklyAssignment]? = nil
+    var reminderPreferences: ReminderPreferences? = nil
+    var restSignalPreferences: RestSignalPreferences? = nil
 }

@@ -6,7 +6,7 @@ struct PodhodApp: App {
     init() {
         if ProcessInfo.processInfo.arguments.contains("--uitesting") {
             let url = URL.temporaryDirectory.appending(path: "Podhod-UITests-\(UUID().uuidString).json")
-            let initialData = ProcessInfo.processInfo.arguments.contains("--uitesting-v2") ? interactionTestData() : SeedData.initial()
+            let initialData = ProcessInfo.processInfo.arguments.contains("--uitesting-v3") ? performanceTestData() : ProcessInfo.processInfo.arguments.contains("--uitesting-v2") ? interactionTestData() : SeedData.initial()
             _store = StateObject(wrappedValue: TrainingStore(fileURL: url, notificationsEnabled: false, initialData: initialData))
         } else {
             _store = StateObject(wrappedValue: TrainingStore())
@@ -25,6 +25,8 @@ private struct RootView: View {
     @EnvironmentObject private var store: TrainingStore
     @State private var selectedTab = 1
     @State private var showWorkout = false
+    @State private var showRecoverySettings = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -34,6 +36,39 @@ private struct RootView: View {
             ProfileView().tabItem { Label("Профиль", systemImage: "person.crop.circle") }.tag(2)
         }
         .toolbarBackground(AppTheme.background, for: .tabBar)
+        .disabled(!store.isDataAvailable)
+        .overlay {
+            if !store.isDataAvailable {
+                VStack(spacing: 18) {
+                    Image(systemName: "lock.doc").font(.largeTitle)
+                    Text("Дневник временно недоступен").font(.headline)
+                    Text("Разблокируй iPhone и повтори загрузку. Сохранённые данные не заменяются.")
+                        .multilineTextAlignment(.center).foregroundStyle(.secondary)
+                    Button("Повторить") { resumeJournal() }
+                    Button("Резервные копии") { showRecoverySettings = true }
+                }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity).background(AppTheme.background)
+            }
+        }
+        .sheet(isPresented: $showRecoverySettings) {
+            NavigationStack {
+                BackupSettingsView().environmentObject(store)
+                    .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Закрыть") { showRecoverySettings = false } } }
+            }
+        }
+        .environment(\.openActiveWorkout, { showWorkout = true })
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active {
+                resumeJournal()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataDidBecomeAvailableNotification)) { _ in
+            resumeJournal()
+        }
+        .onOpenURL { url in
+            guard url.scheme == "podhod", url.host == "workout", store.activeWorkout != nil else { return }
+            selectedTab = 1
+            showWorkout = true
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let workout = store.activeWorkout {
                 Button { showWorkout = true } label: {
@@ -62,6 +97,13 @@ private struct RootView: View {
             Button("Понятно", role: .cancel) { store.errorMessage = nil }
         } message: { Text(store.errorMessage ?? "") }
     }
+
+    private func resumeJournal() {
+        store.resumePersistence()
+        store.synchronizeRestNotification()
+        store.synchronizeInactivityReminder()
+        store.synchronizeWorkoutActivity()
+    }
 }
 
 // Used only together with --uitesting; the real journal is never opened in this mode.
@@ -80,5 +122,25 @@ private func interactionTestData() -> AppData {
     ]
     data.activeWorkout = Workout(name: "Проверка обновления", startedAt: now, exercises: exercises)
     data.routines.append(Routine(name: "Проверка редактора", exercises: exercises))
+    return data
+}
+
+// Synthetic fixtures only; enabled exclusively together with --uitesting.
+private func performanceTestData() -> AppData {
+    var data = SeedData.initial()
+    let now = Date()
+    let definition = ExerciseDefinition(name: "Тяга одной рукой", primaryMuscle: .back, loadType: .external, isCustom: true, tracksSides: true)
+    data.exercises.append(definition)
+    let sides = SideResults(left: SidePerformance(weight: 20, reps: 10), right: SidePerformance(weight: 20, reps: 12))
+    let first = WorkoutExercise(definition: definition, sets: [SetRecord(effort: .hard, isCompleted: true, sides: sides)], notes: "Запись из первого плана", discomfort: DiscomfortRecord(areas: [.shoulder]))
+    var second = first
+    second.id = UUID(); second.notes = "Последняя заметка"; second.discomfort = nil
+    data.workouts = [
+        Workout(name: "План А", startedAt: now.addingTimeInterval(-259200), endedAt: now.addingTimeInterval(-255600), exercises: [first]),
+        Workout(name: "План Б", startedAt: now.addingTimeInterval(-86400), endedAt: now.addingTimeInterval(-82800), exercises: [second])
+    ]
+    var active = WorkoutExercise.new(definition)
+    active.sets = [SetRecord(sides: sides)]
+    data.activeWorkout = Workout(name: "Проверка сторон", startedAt: now, exercises: [active])
     return data
 }

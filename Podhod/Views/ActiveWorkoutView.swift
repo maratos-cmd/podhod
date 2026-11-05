@@ -84,7 +84,8 @@ struct ActiveWorkoutView: View {
                             .accessibilityIdentifier("activeAddExercise")
                     }.padding(.top, 18)
                 } else {
-                    ReorderableExerciseList(exercises: workout.exercises, onMove: moveExercise) { exercise, collapsed in
+                    ReorderableExerciseList(exercises: workout.exercises, onMove: moveExercise,
+                                            autoCollapseCompleted: true, expandedCompleted: $store.expandedCompletedExercises) { exercise, collapsed in
                         ActiveExerciseHeader(
                             exercise: exercise,
                             collapsed: collapsed,
@@ -176,6 +177,8 @@ private struct ActiveExerciseHeader: View {
     @State private var showReplace = false
     @State private var confirmReplace = false
     @State private var showSuperset = false
+    @State private var showHistory = false
+    @State private var showDiscomfort = false
 
     private var group: [WorkoutExercise] {
         guard let id = exercise.supersetID else { return [] }
@@ -198,6 +201,8 @@ private struct ActiveExerciseHeader: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
             if !collapsed {
                 Menu {
+                    Button("История упражнения", systemImage: "chart.xyaxis.line") { showHistory = true }
+                    Button(exercise.discomfort == nil ? "Отметить дискомфорт" : "Изменить дискомфорт", systemImage: "exclamationmark.circle") { showDiscomfort = true }
                     Button("Заменить упражнение", systemImage: "arrow.triangle.2.circlepath") {
                         if exercise.sets.contains(where: \.isCompleted) { confirmReplace = true }
                         else { showReplace = true }
@@ -217,8 +222,16 @@ private struct ActiveExerciseHeader: View {
                 }.accessibilityLabel("Действия: \(exercise.definition.name)")
             }
         }
+        .sheet(isPresented: $showHistory) { ExerciseHistoryView(exercise: exercise.definition) }
+        .sheet(isPresented: $showDiscomfort) {
+            DiscomfortEditorView(record: exercise.discomfort) { flag in
+                store.updateActive { workout in
+                    if let index = workout.exercises.firstIndex(where: { $0.id == exercise.id }) { workout.exercises[index].discomfort = flag }
+                }
+            }
+        }
         .sheet(isPresented: $showReplace) {
-            ExercisePickerView(title: "Заменить упражнение") {
+            ExercisePickerView(title: "Заменить упражнение", replacing: exercise.definition) {
                 store.replaceExerciseInActive(exerciseID: exercise.id, with: $0)
             }
         }
@@ -274,6 +287,7 @@ private struct ActiveExerciseCard: View {
     let exercise: WorkoutExercise
     let workoutStart: Date
     @State private var showRest = false
+    @State private var pendingSetDeletion: SetRecord?
 
     private var previous: (date: Date, exercise: WorkoutExercise)? {
         store.previousExercise(for: exercise.definition.id, before: workoutStart)
@@ -286,6 +300,12 @@ private struct ActiveExerciseCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if let flag = exercise.discomfort { DiscomfortLabel(record: flag) }
+            else if let prior = ExerciseAnalytics.sessions(for: exercise.definition.id, in: store.workouts)
+                .flatMap(\.occurrences).compactMap(\.discomfort).first {
+                Label("Ранее отмечен дискомфорт: \(prior.summary)", systemImage: "exclamationmark.circle")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             TextField("Заметки к упражнению", text: Binding(get: { exercise.notes }, set: { notes in mutate { $0.notes = notes } }), axis: .vertical)
                 .font(.subheadline).lineLimit(1...5)
                 .padding(.vertical, 3)
@@ -308,12 +328,13 @@ private struct ActiveExerciseCard: View {
                 Text("Первый раз: задай свой начальный результат")
                     .font(.caption).foregroundStyle(.secondary)
             }
-            ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { index, set in
+            SwipeableSetList(sets: exercise.sets, onDelete: requestSetDeletion) { index, set in
                 ActiveSetRow(
                     set: set,
                     number: index + 1,
                     loadType: exercise.definition.loadType,
                     previousSet: previousSet(at: index),
+                    previousLoadType: previous?.exercise.definition.loadType,
                     canMoveUp: index > 0,
                     canMoveDown: index < exercise.sets.count - 1,
                     onChange: { updated in
@@ -324,12 +345,12 @@ private struct ActiveExerciseCard: View {
                     },
                     onToggle: { store.toggleSet(exerciseID: exercise.id, setID: set.id) },
                     onMove: { moveSet(set.id, by: $0) },
-                    onRemove: { removeSet(set.id) }
+                    onRemove: { requestSetDeletion(set) }
                 )
             }
             Button {
-                var next = exercise.sets.last ?? SetRecord()
-                next = next.freshTarget(); next.isWarmup = false
+                var next = (exercise.sets.last ?? SetRecord()).target(for: exercise.definition)
+                next.isWarmup = false
                 mutate { $0.sets.append(next) }
             } label: {
                 Label("Добавить подход", systemImage: "plus")
@@ -350,6 +371,15 @@ private struct ActiveExerciseCard: View {
                 }
             }
         }
+        .alert("Удалить выполненный подход?", isPresented: Binding(
+            get: { pendingSetDeletion != nil }, set: { if !$0 { pendingSetDeletion = nil } }
+        ), presenting: pendingSetDeletion) { set in
+            Button("Удалить подход", role: .destructive) {
+                removeSet(set.id)
+                pendingSetDeletion = nil
+            }
+            Button("Отмена", role: .cancel) { pendingSetDeletion = nil }
+        } message: { _ in Text("Вес, повторы, интенсивность и ступени этого подхода будут удалены.") }
     }
 
     private func previousSet(at index: Int) -> SetRecord? {
@@ -375,6 +405,11 @@ private struct ActiveExerciseCard: View {
         if store.restTimer?.sourceSetID == id { store.skipRest() }
         mutate { $0.sets.removeAll { $0.id == id } }
     }
+
+    private func requestSetDeletion(_ set: SetRecord) {
+        if set.isCompleted { pendingSetDeletion = set }
+        else { removeSet(set.id) }
+    }
 }
 
 private struct ActiveSetRow: View {
@@ -382,6 +417,7 @@ private struct ActiveSetRow: View {
     let number: Int
     let loadType: LoadType
     let previousSet: SetRecord?
+    let previousLoadType: LoadType?
     let canMoveUp: Bool
     let canMoveDown: Bool
     let onChange: (SetRecord) -> Void
@@ -394,15 +430,16 @@ private struct ActiveSetRow: View {
             HStack(alignment: .bottom, spacing: 9) {
                 Menu {
                     Button(set.isWarmup ? "Сделать рабочим" : "Отметить как разминку", systemImage: "flame") { mutate { $0.isWarmup.toggle() } }
-                    if let previousSet {
+                    if let previousSet, previousLoadType == loadType, (previousSet.sides != nil) == (set.sides != nil) {
                         Button("Повторить прошлый результат", systemImage: "arrow.uturn.backward") {
                             mutate {
                                 $0.weight = previousSet.weight; $0.reps = previousSet.reps
+                                $0.sides = previousSet.sides
                                 $0.dropSteps = previousSet.freshTarget().dropSteps
                             }
                         }
                     }
-                    if loadType.usesWeight {
+                    if loadType.usesWeight && set.sides == nil {
                         Button(set.isDropSet ? "Добавить ступень" : "Сделать дроп-сетом", systemImage: "arrow.down.right") { addDropStep() }
                             .disabled(set.isCompleted)
                     }
@@ -422,10 +459,14 @@ private struct ActiveSetRow: View {
                             .frame(width: 35, height: 44)
                     }
                 }.accessibilityLabel("Настройки подхода \(number)\(set.isWarmup ? ", разминка" : "")")
+                if set.sides != nil {
+                    Text("Обе стороны").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity)
+                } else {
                 if loadType.usesWeight {
                     TrainingNumberField(label: loadType == .assisted ? "Помощь, кг" : loadType == .weightedBodyweight ? "+ кг" : "Вес, кг", value: set.weight) { weight in mutate { $0.weight = weight } }
                 }
                 TrainingNumberField(label: "Повторы", value: Double(set.reps), integer: true) { reps in mutate { $0.reps = Int(reps) } }
+                }
                 Button(action: onToggle) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 18, weight: .semibold))
@@ -437,6 +478,10 @@ private struct ActiveSetRow: View {
                 .accessibilityLabel(set.isCompleted ? "Снять отметку с подхода \(number)" : "Завершить подход \(number)")
                 .accessibilityIdentifier("completeSet_\(number)")
                 .sensoryFeedback(.success, trigger: set.isCompleted)
+            }
+            if let sides = set.sides {
+                SideResultsEditor(sides: sides, loadType: loadType) { value in mutate { $0.sides = value } }
+                Text("Галочка завершает обе стороны; в статистике это один подход.").font(.caption2).foregroundStyle(.secondary)
             }
             if let steps = set.dropSteps, !steps.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
@@ -470,7 +515,7 @@ private struct ActiveSetRow: View {
             }
             HStack(alignment: .center, spacing: 8) {
                 HStack(spacing: 5) {
-                    Text("Было: \(previousSet.map { Formatters.setSummary($0, loadType: loadType) } ?? "—")")
+                    Text("Было\(previousLoadType != nil && previousLoadType != loadType ? " (\(previousLoadType!.title.lowercased()))" : ""): \(previousSet.map { Formatters.setSummary($0, loadType: previousLoadType ?? loadType) } ?? "—")")
                         .font(.caption).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     if let effort = previousSet?.effort {
@@ -520,9 +565,9 @@ private struct ActiveRestTimerBar: View {
                     Image(systemName: remaining > 0 ? "timer" : "checkmark.circle.fill")
                         .font(.title2).foregroundStyle(remaining > 0 ? AppTheme.accent : AppTheme.green)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(remaining > 0 ? "Отдых" : "Время следующего подхода")
+                        Text(remaining > 0 ? "Отдых" : store.nextAction?.title ?? "Можно начинать")
                             .font(.caption.weight(.semibold))
-                        Text(timer.exerciseName).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                        Text(store.nextAction?.alertMessage ?? timer.exerciseName).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
                     }
                     Spacer(minLength: 4)
                     Text(Formatters.clock(TimeInterval(remaining)))
@@ -617,7 +662,7 @@ private struct WorkoutCompletionView: View {
     @EnvironmentObject private var store: TrainingStore
     let workout: Workout
     let onDone: () -> Void
-    @State private var savedAsRoutine = false
+    @State private var showSaveRoutine = false
 
     var body: some View {
         ScrollView {
@@ -628,36 +673,35 @@ private struct WorkoutCompletionView: View {
                         .foregroundStyle(AppTheme.green)
                         .frame(width: 84, height: 84)
                         .background(AppTheme.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 28))
-                    Text("Ещё один шаг\nвперёд.")
+                    Text("Тренировка\nсохранена.")
                         .font(.system(size: 38, weight: .bold, design: .rounded))
                     Text("\(workout.name) сохранена в истории.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }.padding(.top, 28)
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     MetricTile(title: "Время", value: Formatters.duration(workout.duration), symbol: "clock")
-                    MetricTile(title: "Подходы", value: "\(workout.completedSets)", symbol: "checkmark.circle")
+                    MetricTile(title: "Рабочие подходы", value: "\(workout.exercises.flatMap(\.sets).filter { $0.isCompleted && !$0.isWarmup }.count)", symbol: "checkmark.circle")
                     MetricTile(title: "Объём", value: "\(Formatters.weight(workout.volume)) кг", symbol: "scalemass")
                     MetricTile(title: "Рекорды", value: "\(store.personalRecords(in: workout))", symbol: "medal", tint: .orange)
                 }
-                Button(action: onDone) { Text("Готово") }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .accessibilityIdentifier("workoutSavedDone")
+                Text(workout.startedAt.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+                WorkoutComparisonView(workout: workout)
                 Button {
-                    var exercises = workout.exercises
-                    for exerciseIndex in exercises.indices {
-                        exercises[exerciseIndex].id = UUID()
-                        exercises[exerciseIndex].sets = exercises[exerciseIndex].sets.map { $0.freshTarget() }
-                    }
-                    store.saveRoutine(Routine(name: workout.name, notes: workout.notes, exercises: exercises))
-                    savedAsRoutine = true
+                    showSaveRoutine = true
                 } label: {
-                    Label(savedAsRoutine ? "Программа сохранена" : "Сохранить как программу", systemImage: savedAsRoutine ? "checkmark" : "list.clipboard")
+                    Label("Сохранить как программу", systemImage: "list.clipboard")
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
-                .disabled(savedAsRoutine)
                 Text("Пульс из Apple Health можно добавить в подробностях тренировки в истории.")
                     .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }.padding(24)
         }
+        .safeAreaInset(edge: .bottom) {
+            Button(action: onDone) { Text("Готово") }
+                .buttonStyle(PrimaryButtonStyle())
+                .accessibilityIdentifier("workoutSavedDone")
+                .padding(.horizontal, 20).padding(.vertical, 10).background(.ultraThinMaterial)
+        }
+        .sheet(isPresented: $showSaveRoutine) { SaveWorkoutAsRoutineView(workout: workout) }
     }
 }
